@@ -1,0 +1,89 @@
+<template>
+    <section class="chat" aria-labelledby="assistant-heading">
+        <header class="chat-header">
+            <lightning-icon icon-name="utility:chat" size="small" alternative-text=""></lightning-icon>
+            <h2 id="assistant-heading" class="slds-text-heading_small">{title}</h2>
+        </header>
+
+        <ol class="messages" data-id="messages" aria-live="polite" aria-label="Conversation">
+            <template for:each={viewMessages} for:item="m">
+                <li key={m.id} class={m.rowClass}>
+                    <div class={m.bubbleClass}>
+                        <span class="slds-assistive-text">{m.srLabel}</span>
+                        <p class="text">{m.text}</p>
+
+                        <template lwc:if={m.hasVehicles}>
+                            <ul class="vehicles">
+                                <template for:each={m.vehicleViews} for:item="v">
+                                    <li key={v.key} class="mini-card">
+                                        <p class="mini-title">{v.title}</p>
+                                        <p class="mini-meta">{v.meta}</p>
+                                        <p class="mini-price"><strong>{v.rate}</strong> / day</p>
+                                        <template lwc:if={v.total}><p class="mini-meta">{v.total}</p></template>
+                                        <a class="slds-button slds-button_brand mini-btn" href={v.url}>View</a>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <template lwc:if={m.bookingView}>
+                            <dl class="booking">
+                                <div><dt>Booking</dt><dd>{m.bookingView.number}</dd></div>
+                                <div><dt>Car</dt><dd>{m.bookingView.vehicle}</dd></div>
+                                <div><dt>Status</dt><dd>{m.bookingView.status}</dd></div>
+                                <div><dt>Pickup</dt><dd>{m.bookingView.start}</dd></div>
+                                <div><dt>Return</dt><dd>{m.bookingView.end}</dd></div>
+                                <div><dt>Total</dt><dd>{m.bookingView.amount}</dd></div>
+                            </dl>
+                        </template>
+
+                        <template lwc:if={m.hasLinks}>
+                            <ul class="links">
+                                <template for:each={m.linkViews} for:item="l">
+                                    <li key={l.key}><a href={l.url}>{l.label}</a></li>
+                                </template>
+                            </ul>
+                        </template>
+                    </div>
+                </li>
+            </template>
+            <template lwc:if={isSending}>
+                <li class="row assistant">
+                    <div class="bubble assistant typing" role="status" data-id="typing">
+                        <span class="slds-assistive-text">Assistant is typing</span>
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                    </div>
+                </li>
+            </template>
+        </ol>
+
+        <template lwc:if={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error error" role="alert" data-id="error">
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <div class="composer">
+            <lightning-textarea
+                class="input"
+                label="Message"
+                variant="label-hidden"
+                placeholder="Type your message…"
+                value={draft}
+                max-length="1000"
+                data-id="input"
+                onchange={handleInput}
+                onkeydown={handleKeydown}
+            ></lightning-textarea>
+            <lightning-button-icon
+                icon-name="utility:send"
+                variant="brand"
+                alternative-text="Send"
+                title="Send"
+                data-id="send"
+                disabled={sendDisabled}
+                onclick={handleSend}
+            ></lightning-button-icon>
+        </div>
+    </section>
+</template>

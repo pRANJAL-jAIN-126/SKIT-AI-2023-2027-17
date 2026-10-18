@@ -1,0 +1,143 @@
+<template>
+    <section class="fleet" aria-labelledby="fleet-heading">
+        <h2 id="fleet-heading" class="slds-text-heading_medium slds-m-bottom_small">Find a car</h2>
+
+        <div class="filters" role="search" aria-label="Vehicle search filters">
+            <div class="filter-grid">
+                <lightning-input
+                    type="datetime"
+                    label="Pickup date and time"
+                    name="pickupDateTime"
+                    data-field="pickupDateTime"
+                    value={pickupDateTime}
+                    timezone="Asia/Kolkata"
+                    onchange={handleFilterChange}
+                    required
+                ></lightning-input>
+                <lightning-input
+                    type="datetime"
+                    label="Return date and time"
+                    name="returnDateTime"
+                    data-field="returnDateTime"
+                    value={returnDateTime}
+                    timezone="Asia/Kolkata"
+                    onchange={handleFilterChange}
+                    required
+                ></lightning-input>
+                <lightning-combobox
+                    label="City"
+                    name="branchCity"
+                    data-field="branchCity"
+                    value={branchCity}
+                    options={cityOptions}
+                    onchange={handleFilterChange}
+                ></lightning-combobox>
+                <lightning-combobox
+                    label="Category"
+                    name="category"
+                    data-field="category"
+                    value={category}
+                    options={categoryOptions}
+                    onchange={handleFilterChange}
+                ></lightning-combobox>
+                <lightning-input
+                    type="number"
+                    label="Minimum seats"
+                    name="seats"
+                    data-field="seats"
+                    value={seats}
+                    min="1"
+                    max="12"
+                    step="1"
+                    onchange={handleFilterChange}
+                ></lightning-input>
+                <lightning-combobox
+                    label="Transmission"
+                    name="transmission"
+                    data-field="transmission"
+                    value={transmission}
+                    options={transmissionOptions}
+                    onchange={handleFilterChange}
+                ></lightning-combobox>
+                <lightning-combobox
+                    label="Fuel type"
+                    name="fuelType"
+                    data-field="fuelType"
+                    value={fuelType}
+                    options={fuelOptions}
+                    onchange={handleFilterChange}
+                ></lightning-combobox>
+                <lightning-input
+                    type="number"
+                    label="Max price per day (INR)"
+                    name="maxDailyRate"
+                    data-field="maxDailyRate"
+                    value={maxDailyRate}
+                    min="0"
+                    step="1"
+                    formatter="decimal"
+                    onchange={handleFilterChange}
+                ></lightning-input>
+            </div>
+
+            <template lwc:if={dateError}>
+                <p class="slds-text-color_error slds-m-top_x-small date-error" role="alert" data-id="date-error">
+                    {dateError}
+                </p>
+            </template>
+            <template lwc:if={showDatePrompt}>
+                <p class="slds-text-color_weak slds-m-top_x-small" data-id="date-prompt">
+                    Pick your dates to see which cars are free.
+                </p>
+            </template>
+
+            <div class="actions">
+                <lightning-button
+                    variant="brand"
+                    label="Search"
+                    data-id="search-button"
+                    disabled={searchDisabled}
+                    onclick={handleSearchClick}
+                ></lightning-button>
+                <lightning-button variant="neutral" label="Clear filters" onclick={handleReset}></lightning-button>
+            </div>
+        </div>
+
+        <div class="results" aria-live="polite">
+            <template lwc:if={isLoading}>
+                <div class="spinner-holder">
+                    <lightning-spinner alternative-text="Searching cars" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template lwc:if={errorMessage}>
+                <div class="slds-notify slds-notify_alert slds-alert_error state" role="alert" data-id="error">
+                    <span>{errorMessage}</span>
+                </div>
+            </template>
+
+            <template lwc:if={showEmpty}>
+                <div class="state empty" data-id="empty">
+                    <lightning-icon icon-name="utility:search" size="small" alternative-text=""></lightning-icon>
+                    <p>No cars free for these dates</p>
+                </div>
+            </template>
+
+            <template lwc:if={hasResults}>
+                <p class="slds-text-body_small slds-m-bottom_x-small count">{resultCountLabel}</p>
+                <ul class="grid">
+                    <template for:each={vehicles} for:item="vehicle">
+                        <li key={vehicle.id} class="grid-item">
+                            <c-vehicle-card
+                                vehicle={vehicle}
+                                total-price={vehicle.total}
+                                days={vehicle.days}
+                                onselect={handleVehicleSelect}
+                            ></c-vehicle-card>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+        </div>
+    </section>
+</template>

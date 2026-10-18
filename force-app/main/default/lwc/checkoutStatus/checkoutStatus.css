@@ -1,0 +1,75 @@
+:host {
+    display: block;
+}
+
+.status-card {
+    background: var(--slds-g-color-surface-container-1, #fff);
+    border: 1px solid var(--slds-g-color-border-1, #dddbda);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    max-width: 40rem;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+.center {
+    text-align: center;
+}
+
+.spinner-holder {
+    position: relative;
+    height: 4rem;
+}
+
+.banner {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+}
+
+.banner.success {
+    background: #e7f6e3;
+}
+
+.banner.failed {
+    background: #feeef1;
+}
+
+.banner.pending {
+    background: #fef1e6;
+}
+
+.summary {
+    margin-top: 1rem;
+}
+
+.summary .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.summary dd {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.touch,
+.actions lightning-button {
+    min-height: 44px;
+}
+
+.touch {
+    display: inline-flex;
+    align-items: center;
+}

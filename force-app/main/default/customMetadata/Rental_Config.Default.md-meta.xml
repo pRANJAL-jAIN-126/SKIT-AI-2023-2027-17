@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Default</label>
+    <protected>false</protected>
+    <values>
+        <field>Currency_Code__c</field>
+        <value xsi:type="xsd:string">inr</value>
+    </values>
+    <values>
+        <field>Damage_Approval_Threshold__c</field>
+        <value xsi:type="xsd:double">5000.0</value>
+    </values>
+    <values>
+        <field>Free_Cancel_Hours__c</field>
+        <value xsi:type="xsd:double">24.0</value>
+    </values>
+    <values>
+        <field>Hold_Minutes__c</field>
+        <value xsi:type="xsd:double">15.0</value>
+    </values>
+    <values>
+        <field>Late_Fee_Per_Hour__c</field>
+        <value xsi:type="xsd:double">0.1</value>
+    </values>
+    <values>
+        <field>License_Retention_Days__c</field>
+        <value xsi:type="xsd:double">30.0</value>
+    </values>
+    <values>
+        <field>Max_Image_MB__c</field>
+        <value xsi:type="xsd:double">3.0</value>
+    </values>
+    <values>
+        <field>Max_Rental_Days__c</field>
+        <value xsi:type="xsd:double">30.0</value>
+    </values>
+    <values>
+        <field>Min_Age__c</field>
+        <value xsi:type="xsd:double">21.0</value>
+    </values>
+    <values>
+        <field>Min_OCR_Confidence__c</field>
+        <value xsi:type="xsd:double">0.8</value>
+    </values>
+    <values>
+        <field>Name_Match_Threshold__c</field>
+        <value xsi:type="xsd:double">0.8</value>
+    </values>
+    <values>
+        <field>OCR_Provider_Class__c</field>
+        <value xsi:type="xsd:string">OcrSpaceClient</value>
+    </values>
+    <values>
+        <field>Site_URL__c</field>
+        <value xsi:type="xsd:string">https://orgfarm-b4125b26fe-dev-ed.develop.my.site.com/rentals</value>
+    </values>
+    <values>
+        <field>Support_Email__c</field>
+        <value xsi:type="xsd:string">support@smartcarrental.example</value>
+    </values>
+    <values>
+        <field>Tax_Rate__c</field>
+        <value xsi:type="xsd:double">0.18</value>
+    </values>
+</CustomMetadata>

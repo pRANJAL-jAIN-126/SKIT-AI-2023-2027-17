@@ -1,0 +1,159 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="custom:custom31">
+        <div class="slds-p-horizontal_medium body">
+            <template lwc:if={showPicker}>
+                <lightning-record-picker
+                    label="Booking"
+                    placeholder="Search bookings…"
+                    object-api-name="Booking__c"
+                    onchange={handleBookingPicked}
+                ></lightning-record-picker>
+            </template>
+
+            <template lwc:if={isLoading}>
+                <div class="spinner-holder">
+                    <lightning-spinner alternative-text="Loading booking" size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <template lwc:if={loadError}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-vertical_small" role="alert">
+                    <span>{loadError}</span>
+                </div>
+            </template>
+
+            <template lwc:if={hasContext}>
+                <div class="context slds-m-vertical_small">
+                    <p><strong>{context.bookingNumber}</strong> · {context.vehicleName}</p>
+                    <p class="slds-text-body_small slds-text-color_weak">Booking status: {context.bookingStatus}</p>
+                    <template lwc:if={context.currentOdometer}>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            Current odometer: {context.currentOdometer} km
+                        </p>
+                    </template>
+                    <template lwc:if={isReturn}>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            Pickup odometer: {context.pickupOdometer} km · Pickup fuel: {context.pickupFuel}
+                        </p>
+                    </template>
+                </div>
+
+                <template lwc:if={canInspect}>
+                    <div class="grid">
+                        <lightning-input
+                            type="number"
+                            label="Odometer (km)"
+                            data-field="odometer"
+                            value={odometer}
+                            min="0"
+                            step="1"
+                            field-level-help={odometerHelp}
+                            onchange={handleChange}
+                            required
+                        ></lightning-input>
+                        <lightning-combobox
+                            label="Fuel level"
+                            data-field="fuelLevel"
+                            value={fuelLevel}
+                            options={fuelOptions}
+                            onchange={handleChange}
+                            required
+                        ></lightning-combobox>
+                        <lightning-combobox
+                            label="Exterior condition"
+                            data-field="exteriorCondition"
+                            value={exteriorCondition}
+                            options={conditionOptions}
+                            onchange={handleChange}
+                            required
+                        ></lightning-combobox>
+                        <lightning-combobox
+                            label="Interior condition"
+                            data-field="interiorCondition"
+                            value={interiorCondition}
+                            options={conditionOptions}
+                            onchange={handleChange}
+                            required
+                        ></lightning-combobox>
+                    </div>
+
+                    <lightning-textarea
+                        class="slds-m-top_small"
+                        label="Damage notes"
+                        data-field="damageNotes"
+                        value={damageNotes}
+                        onchange={handleChange}
+                    ></lightning-textarea>
+
+                    <lightning-input
+                        class="slds-m-top_small"
+                        type="checkbox"
+                        label="Damage detected"
+                        data-field="damageDetected"
+                        checked={damageDetected}
+                        onchange={handleChange}
+                    ></lightning-input>
+
+                    <template lwc:if={isReturn}>
+                        <lightning-input
+                            class="slds-m-top_small"
+                            type="number"
+                            label="Estimated damage charge (INR)"
+                            data-field="estimatedCharge"
+                            value={estimatedCharge}
+                            formatter="currency"
+                            step="0.01"
+                            min="0"
+                            onchange={handleChange}
+                        ></lightning-input>
+                    </template>
+
+                    <div class="slds-m-top_small">
+                        <lightning-file-upload
+                            label="Photos"
+                            name="inspectionPhotos"
+                            accept={acceptedFormats}
+                            record-id={bookingId}
+                            onuploadfinished={handleUploadFinished}
+                            multiple
+                        ></lightning-file-upload>
+                        <template lwc:if={hasFiles}>
+                            <ul class="files slds-m-top_x-small">
+                                <template for:each={uploadedFiles} for:item="f">
+                                    <li key={f.documentId} class="slds-text-body_small">
+                                        <lightning-icon icon-name="doctype:image" size="xx-small" alternative-text="Photo"></lightning-icon>
+                                        <span>{f.name}</span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                    </div>
+
+                    <template lwc:if={saveError}>
+                        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert">
+                            <span>{saveError}</span>
+                        </div>
+                    </template>
+                </template>
+
+                <template lwc:else>
+                    <p class="slds-m-vertical_small" data-id="no-inspection">{contextMessage}</p>
+                </template>
+            </template>
+        </div>
+
+        <template lwc:if={canInspect}>
+            <div slot="footer" class="footer">
+                <lightning-button
+                    variant="brand"
+                    label="Save inspection"
+                    disabled={saveDisabled}
+                    onclick={handleSave}
+                ></lightning-button>
+                <template lwc:if={isSaving}>
+                    <lightning-spinner alternative-text="Saving" size="small"></lightning-spinner>
+                </template>
+            </div>
+        </template>
+    </lightning-card>
+</template>
