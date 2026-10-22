@@ -1,0 +1,129 @@
+:host {
+    display: block;
+}
+
+.kyc {
+    overflow-x: hidden;
+}
+
+.card {
+    background: var(--slds-g-color-surface-container-1, #fff);
+    border: 1px solid var(--slds-g-color-border-1, #dddbda);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.card.success {
+    border-color: #2e844a;
+}
+
+.spinner-holder {
+    position: relative;
+    height: 3rem;
+}
+
+.current {
+    margin-bottom: 0.75rem;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 0.125rem 0.625rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+.status-pill.verified {
+    background: #cdefc4;
+    color: #194e31;
+}
+
+.status-pill.pending {
+    background: #fbe7c4;
+    color: #6e4100;
+}
+
+.status-pill.rejected {
+    background: #fddde3;
+    color: #8e030f;
+}
+
+.status-pill.neutral {
+    background: #ecebea;
+    color: #3e3e3c;
+}
+
+.file-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0;
+}
+
+.file-input:disabled {
+    opacity: 0.5;
+}
+
+.processing {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+}
+
+.spinner-inline {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+}
+
+.banner {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+}
+
+.banner.success {
+    background: #e7f6e3;
+}
+
+.banner.pending {
+    background: #fef1e6;
+}
+
+.banner.rejected {
+    background: #feeef1;
+}
+
+.fields .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.fields dd {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.touch,
+.actions lightning-button {
+    min-height: 44px;
+}
+
+.touch {
+    display: inline-flex;
+    align-items: center;
+}

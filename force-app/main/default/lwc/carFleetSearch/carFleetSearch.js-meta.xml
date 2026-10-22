@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Car Fleet Search</masterLabel>
+    <description>Searches free rental cars by dates, city and filters and lists them as vehicle cards.</description>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property name="defaultCity" type="String" label="Default city" description="City pre-selected when the URL has no city (e.g. Jaipur or Delhi). Leave blank for Any." />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
