@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>License_Number_Masked__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(ISBLANK(Driving_License_Number__c), &quot;&quot;, &quot;XXXX&quot; &amp; RIGHT(Driving_License_Number__c, 4))</formula>
+    <label>Licence Number (Masked)</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApprovalProcess xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <allowRecall>true</allowRecall>
+    <allowedSubmitters>
+        <type>allInternalUsers</type>
+    </allowedSubmitters>
+    <allowedSubmitters>
+        <type>creator</type>
+    </allowedSubmitters>
+    <allowedSubmitters>
+        <type>owner</type>
+    </allowedSubmitters>
+    <approvalPageFields>
+        <field>Name</field>
+        <field>Booking__c</field>
+        <field>Vehicle__c</field>
+        <field>Damage_Severity__c</field>
+        <field>Estimated_Charge__c</field>
+        <field>Damage_Notes__c</field>
+        <field>AI_Summary__c</field>
+        <field>Inspector__c</field>
+        <field>Owner</field>
+    </approvalPageFields>
+    <approvalStep>
+        <allowDelegate>true</allowDelegate>
+        <assignedApprover>
+            <approver>
+                <name>Branch_Manager__c</name>
+                <type>relatedUserField</type>
+            </approver>
+            <whenMultipleApprovers>FirstResponse</whenMultipleApprovers>
+        </assignedApprover>
+        <description>The pickup branch manager (Inspection__c.Branch_Manager__c, D-12) approves or waives the damage charge.</description>
+        <label>Branch Manager Review</label>
+        <name>Branch_Manager_Review</name>
+    </approvalStep>
+    <description>TDD §12 / Plan Phase 8 / D-12 – Damage_Charge_Approval. Submitted by DamageReportAction (Inspection_Return_Report async path) when damage is Major or the estimated charge exceeds the Rental_Config__mdt threshold. Approver: Inspection__c.Branch_Manager__c. Submit =&gt; Charge Pending Approval (record locked); Approve =&gt; Charge Approved; Reject =&gt; Charge Waived; record unlocked after the decision.</description>
+    <enableMobileDeviceAccess>true</enableMobileDeviceAccess>
+    <entryCriteria>
+        <criteriaItems>
+            <field>Inspection__c.Damage_Detected__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+    </entryCriteria>
+    <finalApprovalActions>
+        <action>
+            <name>Charge_Status_Approved</name>
+            <type>FieldUpdate</type>
+        </action>
+    </finalApprovalActions>
+    <finalApprovalRecordLock>false</finalApprovalRecordLock>
+    <finalRejectionActions>
+        <action>
+            <name>Charge_Status_Waived</name>
+            <type>FieldUpdate</type>
+        </action>
+    </finalRejectionActions>
+    <finalRejectionRecordLock>false</finalRejectionRecordLock>
+    <initialSubmissionActions>
+        <action>
+            <name>Charge_Status_Pending_Approval</name>
+            <type>FieldUpdate</type>
+        </action>
+    </initialSubmissionActions>
+    <label>Damage Charge Approval</label>
+    <processOrder>1</processOrder>
+    <recordEditability>AdminOnly</recordEditability>
+    <showApprovalHistory>true</showApprovalHistory>
+</ApprovalProcess>

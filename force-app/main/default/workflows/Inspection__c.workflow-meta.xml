@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldUpdates>
+        <fullName>Charge_Status_Approved</fullName>
+        <description>Damage_Charge_Approval final approval action: charge recorded.</description>
+        <field>Charge_Status__c</field>
+        <literalValue>Approved</literalValue>
+        <name>Charge Status Approved</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>false</reevaluateOnChange>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Charge_Status_Pending_Approval</fullName>
+        <description>Damage_Charge_Approval initial submission action.</description>
+        <field>Charge_Status__c</field>
+        <literalValue>Pending Approval</literalValue>
+        <name>Charge Status Pending Approval</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>false</reevaluateOnChange>
+    </fieldUpdates>
+    <fieldUpdates>
+        <fullName>Charge_Status_Waived</fullName>
+        <description>Damage_Charge_Approval final rejection action: charge waived.</description>
+        <field>Charge_Status__c</field>
+        <literalValue>Waived</literalValue>
+        <name>Charge Status Waived</name>
+        <notifyAssignee>false</notifyAssignee>
+        <operation>Literal</operation>
+        <protected>false</protected>
+        <reevaluateOnChange>false</reevaluateOnChange>
+    </fieldUpdates>
+</Workflow>

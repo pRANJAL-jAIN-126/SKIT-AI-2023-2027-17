@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <brand>
+        <headerColor>#0B5CAB</headerColor>
+        <shouldOverrideOrgTheme>true</shouldOverrideOrgTheme>
+    </brand>
+    <description>Smart Car Rental back office: bookings, fleet, branches, payments, inspections, maintenance and KYC review for branch staff.</description>
+    <formFactors>Small</formFactors>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
+    <label>Smart Car Rental</label>
+    <navType>Standard</navType>
+    <tabs>standard-home</tabs>
+    <tabs>Booking__c</tabs>
+    <tabs>Vehicle__c</tabs>
+    <tabs>Branch__c</tabs>
+    <tabs>Payment__c</tabs>
+    <tabs>Inspection__c</tabs>
+    <tabs>Maintenance__c</tabs>
+    <tabs>KYC_Log__c</tabs>
+    <tabs>standard-Contact</tabs>
+    <tabs>standard-report</tabs>
+    <tabs>standard-Dashboard</tabs>
+    <uiType>Lightning</uiType>
+</CustomApplication>

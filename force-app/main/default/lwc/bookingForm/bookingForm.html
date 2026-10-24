@@ -1,0 +1,124 @@
+<template>
+    <section class="booking" aria-labelledby="booking-heading">
+        <template lwc:if={isLoading}>
+            <div class="spinner-holder">
+                <lightning-spinner alternative-text="Loading car details" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={loadError}>
+            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert" data-id="load-error">
+                <span>{loadError}</span>
+            </div>
+        </template>
+
+        <template lwc:if={hasVehicle}>
+            <div class="layout">
+                <div class="summary">
+                    <template lwc:if={vehicle.imageUrl}>
+                        <img class="photo" src={vehicle.imageUrl} alt={vehicleTitle} />
+                    </template>
+                    <h2 id="booking-heading" class="slds-text-heading_medium title" data-id="vehicle-title">{vehicleTitle}</h2>
+                    <p class="slds-text-body_small meta">{vehicleMeta}</p>
+                    <template lwc:if={branchLabel}>
+                        <p class="slds-text-body_small meta">Pickup at {branchLabel}</p>
+                    </template>
+                    <p class="rate"><strong>{dailyRateLabel}</strong> / day</p>
+                </div>
+
+                <div class="panel">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Your trip</h3>
+                    <div class="dates">
+                        <lightning-input
+                            type="datetime"
+                            label="Pickup date and time"
+                            data-field="startDt"
+                            value={startDt}
+                            timezone="Asia/Kolkata"
+                            onchange={handleDateChange}
+                            required
+                        ></lightning-input>
+                        <lightning-input
+                            type="datetime"
+                            label="Return date and time"
+                            data-field="endDt"
+                            value={endDt}
+                            timezone="Asia/Kolkata"
+                            onchange={handleDateChange}
+                            required
+                        ></lightning-input>
+                    </div>
+                    <template lwc:if={dateError}>
+                        <p class="slds-text-color_error slds-m-top_x-small" role="alert" data-id="date-error">{dateError}</p>
+                    </template>
+
+                    <div class="quote" aria-live="polite">
+                        <template lwc:if={isQuoting}>
+                            <div class="spinner-holder small">
+                                <lightning-spinner alternative-text="Updating price" size="small"></lightning-spinner>
+                            </div>
+                        </template>
+                        <template lwc:if={hasQuote}>
+                            <dl class="breakdown" data-id="breakdown">
+                                <div class="row"><dt>{breakdown.rateLine}</dt><dd>{breakdown.subtotal}</dd></div>
+                                <div class="row"><dt>Tax</dt><dd>{breakdown.tax}</dd></div>
+                                <div class="row"><dt>Rental total</dt><dd>{breakdown.total}</dd></div>
+                                <div class="row"><dt>Refundable security deposit</dt><dd>{breakdown.deposit}</dd></div>
+                                <div class="row grand"><dt>Pay now</dt><dd data-id="grand-total">{breakdown.grandTotal}</dd></div>
+                            </dl>
+                        </template>
+                    </div>
+
+                    <template lwc:if={showKycNotice}>
+                        <div class="notice slds-m-top_small" data-id="kyc-notice">
+                            <lightning-icon icon-name="utility:info" size="x-small" alternative-text="Info"></lightning-icon>
+                            <span>
+                                Licence status: {kycStatusLabel}. We will hold the car for you while you verify your
+                                driving licence, then you can pay.
+                            </span>
+                        </div>
+                    </template>
+
+                    <template lwc:if={hold}>
+                        <div class="notice hold slds-m-top_small" data-id="hold">
+                            <span>Booking {hold.bookingNumber} is on hold until <strong>{holdExpiryLabel}</strong>.</span>
+                        </div>
+                    </template>
+
+                    <template lwc:if={bookingError}>
+                        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert" data-id="booking-error">
+                            <span>{bookingError}</span>
+                        </div>
+                    </template>
+                    <template lwc:if={infoMessage}>
+                        <p class="slds-m-top_small" role="status" data-id="info">{infoMessage}</p>
+                    </template>
+
+                    <template lwc:if={showLoginPrompt}>
+                        <div class="login-prompt slds-m-top_small" role="alert" data-id="login-prompt">
+                            <p>Please log in or create an account to book this car.</p>
+                            <div class="actions">
+                                <a class="slds-button slds-button_brand" href={loginUrl} data-id="login-link">Log in</a>
+                                <lightning-button label="Not now" onclick={handleCloseLoginPrompt}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="book slds-m-top_medium">
+                        <lightning-button
+                            variant="brand"
+                            label={bookLabel}
+                            data-id="book-button"
+                            disabled={bookDisabled}
+                            onclick={handleBook}
+                            stretch
+                        ></lightning-button>
+                        <template lwc:if={isBooking}>
+                            <lightning-spinner alternative-text="Booking" size="small"></lightning-spinner>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </section>
+</template>

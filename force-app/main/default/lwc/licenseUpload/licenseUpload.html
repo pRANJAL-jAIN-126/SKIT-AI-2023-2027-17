@@ -1,0 +1,167 @@
+<template>
+    <section class="kyc" aria-labelledby="kyc-heading">
+        <h2 id="kyc-heading" class="slds-text-heading_medium slds-m-bottom_small">Verify your driving licence</h2>
+
+        <template lwc:if={profileLoading}>
+            <div class="spinner-holder">
+                <lightning-spinner alternative-text="Loading your status" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={profileError}>
+            <div class="slds-notify slds-notify_alert slds-alert_warning" role="alert" data-id="profile-error">
+                <span>{profileError}</span>
+            </div>
+        </template>
+
+        <template lwc:if={isGuest}>
+            <div class="card" data-id="guest">
+                <p>Please log in to verify your licence.</p>
+                <a class="slds-button slds-button_brand slds-m-top_small touch" href={loginUrl}>Log in</a>
+            </div>
+        </template>
+
+        <template lwc:if={showCurrentStatus}>
+            <p class="current" data-id="current-status">
+                Current status: <span class={currentStatusClass}>{currentStatus}</span>
+            </p>
+        </template>
+
+        <template lwc:if={alreadyVerified}>
+            <div class="card success" data-id="already-verified">
+                <p><strong>Your licence is already verified.</strong></p>
+                <template lwc:if={profile.maskedLicenseNumber}>
+                    <p class="slds-text-body_small">Licence {profile.maskedLicenseNumber}</p>
+                </template>
+                <template lwc:if={profileLicenseExpiry}>
+                    <p class="slds-text-body_small">Valid until {profileLicenseExpiry}</p>
+                </template>
+                <template lwc:if={verifiedAtLabel}>
+                    <p class="slds-text-body_small">Verified on {verifiedAtLabel}</p>
+                </template>
+                <template lwc:if={hasBooking}>
+                    <lightning-button
+                        class="slds-m-top_small"
+                        variant="brand"
+                        label="Continue to payment"
+                        data-id="continue-payment"
+                        onclick={handleContinueToPayment}
+                    ></lightning-button>
+                </template>
+                <p class="slds-text-body_small slds-m-top_small">You can upload a new photo below if your licence has changed.</p>
+            </div>
+        </template>
+
+        <template lwc:if={showForm}>
+            <div class="card form">
+                <p class="slds-m-bottom_small">
+                    Upload a clear photo of the front of your driving licence (JPG or PNG). We read it automatically
+                    and only keep the details needed to verify you.
+                </p>
+                <lightning-input
+                    type="checkbox"
+                    label={consentLabel}
+                    name="consent"
+                    data-id="consent"
+                    checked={consentGiven}
+                    onchange={handleConsentChange}
+                ></lightning-input>
+
+                <div class="upload slds-m-top_small">
+                    <label class="slds-form-element__label" for="licence-file">Licence photo</label>
+                    <input
+                        id="licence-file"
+                        class="file-input"
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        data-id="file-input"
+                        disabled={uploadDisabled}
+                        onchange={handleFileChange}
+                    />
+                    <template lwc:if={showConsentHint}>
+                        <p class="slds-text-body_small slds-text-color_weak" data-id="consent-hint">
+                            Tick the consent box to enable upload.
+                        </p>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <template lwc:if={isProcessing}>
+            <div class="processing" role="status" data-id="processing">
+                <div class="spinner-inline">
+                    <lightning-spinner alternative-text="Reading your licence" size="small"></lightning-spinner>
+                </div>
+                <span>Reading your licence…</span>
+            </div>
+        </template>
+
+        <template lwc:if={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert" data-id="error">
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <template lwc:if={result}>
+            <div class="card result slds-m-top_small" aria-live="polite">
+                <template lwc:if={isResultVerified}>
+                    <div class="banner success" data-id="result-verified">
+                        <lightning-icon icon-name="utility:success" size="small" alternative-text="Verified"></lightning-icon>
+                        <span><strong>Your licence is verified.</strong> Please check the details below.</span>
+                    </div>
+                </template>
+                <template lwc:if={isResultPending}>
+                    <div class="banner pending" data-id="result-pending">
+                        <lightning-icon icon-name="utility:clock" size="small" alternative-text="Pending review"></lightning-icon>
+                        <span>
+                            <strong>Thanks — we will review shortly.</strong> Our team needs to take a quick look at your
+                            licence. We will let you know once it is approved.
+                        </span>
+                    </div>
+                </template>
+                <template lwc:if={isResultRejected}>
+                    <div class="banner rejected" data-id="result-rejected">
+                        <lightning-icon icon-name="utility:error" size="small" alternative-text="Rejected"></lightning-icon>
+                        <span><strong>We could not verify your licence.</strong> {rejectReason}</span>
+                    </div>
+                </template>
+
+                <template lwc:if={isResultError}>
+                    <div class="banner rejected" role="alert" data-id="result-error">
+                        <lightning-icon icon-name="utility:warning" size="small" alternative-text="Service unavailable"></lightning-icon>
+                        <span><strong>We could not check your licence just now.</strong> {serviceErrorMessage}</span>
+                    </div>
+                </template>
+
+                <template lwc:if={showExtracted}>
+                    <h3 class="slds-text-heading_small slds-m-top_small">Details we read</h3>
+                    <dl class="fields" data-id="extracted">
+                        <div class="row"><dt>Name</dt><dd data-id="ex-name">{extracted.name}</dd></div>
+                        <div class="row"><dt>Date of birth</dt><dd>{extracted.dob}</dd></div>
+                        <div class="row"><dt>Licence number</dt><dd data-id="ex-licence">{extracted.licence}</dd></div>
+                        <div class="row"><dt>Expiry</dt><dd>{extracted.expiry}</dd></div>
+                    </dl>
+                </template>
+
+                <div class="actions slds-m-top_small">
+                    <template lwc:if={isResultVerified}>
+                        <template lwc:if={hasBooking}>
+                            <lightning-button
+                                variant="brand"
+                                label="Continue to payment"
+                                data-id="continue-payment"
+                                onclick={handleContinueToPayment}
+                            ></lightning-button>
+                        </template>
+                        <template lwc:else>
+                            <a class="slds-button slds-button_brand touch" href={fleetUrl}>Browse cars</a>
+                        </template>
+                    </template>
+                    <template lwc:if={canRetry}>
+                        <lightning-button label="Try again" data-id="retry" onclick={handleRetry}></lightning-button>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </section>
+</template>
