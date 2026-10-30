@@ -25,52 +25,58 @@ private class BookingTriggerHandlerTest {
 
     @IsTest
     static void newBookingMustStartPendingAndGetsDefaults() {
-        TestDataFactory.useTestConfig();
-        Booking__c ok = build(2, 'Pending Payment');
-        ok.Status__c = null;
-        ok.Payment_Status__c = null;
-        insert ok;
-        Booking__c saved = [SELECT Status__c, Payment_Status__c, Pickup_Branch__c FROM Booking__c WHERE Id = :ok.Id];
-        Assert.areEqual('Pending Payment', saved.Status__c);
-        Assert.areEqual('Unpaid', saved.Payment_Status__c);
-        Assert.isNotNull(saved.Pickup_Branch__c, 'pickup branch defaults from the vehicle');
+        System.runAs(TestDataFactory.staffUser()) {
+            TestDataFactory.useTestConfig();
+            Booking__c ok = build(2, 'Pending Payment');
+            ok.Status__c = null;
+            ok.Payment_Status__c = null;
+            insert ok;
+            Booking__c saved = [SELECT Status__c, Payment_Status__c, Pickup_Branch__c FROM Booking__c WHERE Id = :ok.Id];
+            Assert.areEqual('Pending Payment', saved.Status__c);
+            Assert.areEqual('Unpaid', saved.Payment_Status__c);
+            Assert.isNotNull(saved.Pickup_Branch__c, 'pickup branch defaults from the vehicle');
 
-        Database.SaveResult sr = Database.insert(build(5, 'Confirmed'), false);
-        Assert.isFalse(sr.isSuccess(), 'a booking cannot be created as Confirmed');
+            Database.SaveResult sr = Database.insert(build(5, 'Confirmed'), false);
+            Assert.isFalse(sr.isSuccess(), 'a booking cannot be created as Confirmed');
+        }
     }
 
     @IsTest
     static void confirmedOnlyThroughPaymentGate() {
-        TestDataFactory.useTestConfig();
-        Booking__c b = build(2, 'Pending Payment');
-        insert b;
-        b.Status__c = 'Confirmed';
-        b.Payment_Status__c = 'Paid';
-        Database.SaveResult sr = Database.update(b, false);
-        Assert.isFalse(sr.isSuccess(), 'TDD 8.4: nothing but StripeService may confirm');
-        Assert.isTrue(sr.getErrors()[0].getMessage().contains('verified payment'));
+        System.runAs(TestDataFactory.staffUser()) {
+            TestDataFactory.useTestConfig();
+            Booking__c b = build(2, 'Pending Payment');
+            insert b;
+            b.Status__c = 'Confirmed';
+            b.Payment_Status__c = 'Paid';
+            Database.SaveResult sr = Database.update(b, false);
+            Assert.isFalse(sr.isSuccess(), 'TDD 8.4: nothing but StripeService may confirm');
+            Assert.isTrue(sr.getErrors()[0].getMessage().contains('verified payment'));
 
-        BookingTriggerHandler.confirmationGateOpen = true;
-        b.Payment_Status__c = 'Unpaid';
-        sr = Database.update(b, false);
-        Assert.isFalse(sr.isSuccess(), 'gate still requires Paid');
-        b.Payment_Status__c = 'Paid';
-        sr = Database.update(b, false);
-        BookingTriggerHandler.confirmationGateOpen = false;
-        Assert.isTrue(sr.isSuccess(), String.valueOf(sr.getErrors()));
+            BookingTriggerHandler.confirmationGateOpen = true;
+            b.Payment_Status__c = 'Unpaid';
+            sr = Database.update(b, false);
+            Assert.isFalse(sr.isSuccess(), 'gate still requires Paid');
+            b.Payment_Status__c = 'Paid';
+            sr = Database.update(b, false);
+            BookingTriggerHandler.confirmationGateOpen = false;
+            Assert.isTrue(sr.isSuccess(), String.valueOf(sr.getErrors()));
+        }
     }
 
     @IsTest
     static void invalidTransitionsRejected() {
-        TestDataFactory.useTestConfig();
-        Booking__c b = build(2, 'Pending Payment');
-        insert b;
-        b.Status__c = 'Active';
-        Assert.isFalse(Database.update(b, false).isSuccess(), 'Pending Payment -> Active is not allowed');
-        b.Status__c = 'Cancelled';
-        Assert.isTrue(Database.update(b, false).isSuccess());
-        b.Status__c = 'Pending Payment';
-        Assert.isFalse(Database.update(b, false).isSuccess(), 'Cancelled is terminal');
+        System.runAs(TestDataFactory.staffUser()) {
+            TestDataFactory.useTestConfig();
+            Booking__c b = build(2, 'Pending Payment');
+            insert b;
+            b.Status__c = 'Active';
+            Assert.isFalse(Database.update(b, false).isSuccess(), 'Pending Payment -> Active is not allowed');
+            b.Status__c = 'Cancelled';
+            Assert.isTrue(Database.update(b, false).isSuccess());
+            b.Status__c = 'Pending Payment';
+            Assert.isFalse(Database.update(b, false).isSuccess(), 'Cancelled is terminal');
+        }
     }
 
     @IsTest
@@ -101,23 +107,25 @@ private class BookingTriggerHandlerTest {
 
     @IsTest
     static void apiCannotTamperWithPriceOrHold() {
-        TestDataFactory.useTestConfig();
-        Booking__c b = build(4, 'Pending Payment');
-        b.Total_Amount__c = 1;
-        b.Deposit_Amount__c = 0;
-        b.Rental_Days__c = 1;
-        b.Payment_Status__c = 'Paid';
-        b.Hold_Expires_At__c = System.now().addYears(1);
-        insert b;
-        Booking__c saved = [SELECT Total_Amount__c, Deposit_Amount__c, Payment_Status__c, Hold_Expires_At__c FROM Booking__c WHERE Id = :b.Id];
-        Assert.areEqual(4130, saved.Total_Amount__c, 'price recomputed from the vehicle: 3500 x 1 day + 18%');
-        Assert.areEqual(5000, saved.Deposit_Amount__c);
-        Assert.areEqual('Unpaid', saved.Payment_Status__c);
-        Assert.isTrue(saved.Hold_Expires_At__c <= System.now().addMinutes(15), 'hold cannot be extended');
+        System.runAs(TestDataFactory.staffUser()) {
+            TestDataFactory.useTestConfig();
+            Booking__c b = build(4, 'Pending Payment');
+            b.Total_Amount__c = 1;
+            b.Deposit_Amount__c = 0;
+            b.Rental_Days__c = 1;
+            b.Payment_Status__c = 'Paid';
+            b.Hold_Expires_At__c = System.now().addYears(1);
+            insert b;
+            Booking__c saved = [SELECT Total_Amount__c, Deposit_Amount__c, Payment_Status__c, Hold_Expires_At__c FROM Booking__c WHERE Id = :b.Id];
+            Assert.areEqual(4130, saved.Total_Amount__c, 'price recomputed from the vehicle: 3500 x 1 day + 18%');
+            Assert.areEqual(5000, saved.Deposit_Amount__c);
+            Assert.areEqual('Unpaid', saved.Payment_Status__c);
+            Assert.isTrue(saved.Hold_Expires_At__c <= System.now().addMinutes(15), 'hold cannot be extended');
 
-        saved.Total_Amount__c = 10;
-        update saved;
-        Assert.areEqual(4130, [SELECT Total_Amount__c FROM Booking__c WHERE Id = :b.Id].Total_Amount__c, 'updates are repriced too');
+            saved.Total_Amount__c = 10;
+            update saved;
+            Assert.areEqual(4130, [SELECT Total_Amount__c FROM Booking__c WHERE Id = :b.Id].Total_Amount__c, 'updates are repriced too');
+        }
     }
 
     @IsTest
