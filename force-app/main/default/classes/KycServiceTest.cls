@@ -209,6 +209,8 @@ private class KycServiceTest {
         Assert.areEqual('Not Submitted', p.kycStatus);
         Assert.isNull(KycService.profile(null).contactId);
     }
+<<<<<<< HEAD
+=======
     @IsTest
 static void providerFailureReturnsErrorAndKeepsKycStatus() {
     TestDataFactory.useTestConfig();
@@ -266,4 +268,5 @@ static void providerFailureReturnsErrorAndKeepsKycStatus() {
         KycService.providerOverride = null;
     }
 }
+>>>>>>> origin/main
 }
