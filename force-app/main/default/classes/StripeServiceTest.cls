@@ -244,4 +244,53 @@ private class StripeServiceTest {
         }
         StripeService.recordRefundFailure(null, 1, 'x');
     }
+    @IsTest
+static void successfulPaymentConfirmsBooking() {
+    TestDataFactory.useTestConfig();
+
+    Booking__c b = booking();
+
+    TestDataFactory.createPayment(
+        b.Id,
+        'cs_test_success123',
+        'Initiated',
+        b.Grand_Total__c,
+        null
+    );
+
+    Test.setMock(
+        HttpCalloutMock.class,
+        StripeHttpMock.paid(b.Id)
+    );
+
+    Test.startTest();
+
+    RentalDtos.PaymentResultDTO result =
+        StripeService.verifyAndConfirm(
+            'cs_test_success123',
+            b.Customer__c
+        );
+
+    Test.stopTest();
+
+    System.assertEquals('Succeeded', result.status);
+
+    Booking__c updatedBooking = [
+        SELECT Status__c, Payment_Status__c
+        FROM Booking__c
+        WHERE Id = :b.Id
+    ];
+
+    System.assertEquals('Confirmed', updatedBooking.Status__c);
+    System.assertEquals('Paid', updatedBooking.Payment_Status__c);
+
+    Payment__c payment = [
+        SELECT Status__c
+        FROM Payment__c
+        WHERE Booking__c = :b.Id
+        LIMIT 1
+    ];
+
+    System.assertEquals('Succeeded', payment.Status__c);
+}
 }
