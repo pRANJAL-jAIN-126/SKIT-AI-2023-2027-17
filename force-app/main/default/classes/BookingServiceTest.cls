@@ -274,4 +274,29 @@ private class BookingServiceTest {
             Assert.isNotNull(BookingRepository.getOwnedByNumber(rahul().Id, b.Id == null ? null : [SELECT Name FROM Booking__c].Name));
         }
     }
+    @IsTest
+static void createHoldNormalisesSourceAndSession() {
+    System.runAs(TestDataFactory.staffUser()) {
+        TestDataFactory.useTestConfig();
+
+        String longSession = '';
+        for (Integer i = 0; i < 100; i++) {
+            longSession += 'X';
+        }
+
+        Booking__c b = BookingService.createHold(
+            rahul().Id,
+            car().Id,
+            TestDataFactory.future(10, 4),
+            TestDataFactory.future(12, 4),
+            'UnknownSource',
+            longSession
+        );
+
+        System.assertEquals('Portal', b.Source__c);
+        System.assertEquals(80, b.Agent_Session_Id__c.length());
+        System.assertEquals('Pending Payment', b.Status__c);
+        System.assertEquals('Unpaid', b.Payment_Status__c);
+    }
+}
 }
