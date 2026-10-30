@@ -266,4 +266,51 @@ private class InspectionServiceTest {
             Assert.areEqual('None', [SELECT Damage_Severity__c FROM Inspection__c WHERE Id = :ret.Id].Damage_Severity__c);
         }
     }
+    @IsTest
+static void returnActionProcessesMultipleRequests() {
+    System.runAs(TestDataFactory.staffUser()) {
+        TestDataFactory.useTestConfig();
+
+        Booking__c b1 = activate();
+        Booking__c b2 = activate();
+
+        Inspection__c ret1 = new Inspection__c(
+            Booking__c = b1.Id,
+            Type__c = 'Return',
+            Odometer__c = 10100
+        );
+
+        Inspection__c ret2 = new Inspection__c(
+            Booking__c = b2.Id,
+            Type__c = 'Return',
+            Odometer__c = 10200
+        );
+
+        insert new List<Inspection__c>{ret1, ret2};
+
+        InspectionReturnAction.Request r1 =
+            new InspectionReturnAction.Request();
+        r1.inspectionId = ret1.Id;
+
+        InspectionReturnAction.Request r2 =
+            new InspectionReturnAction.Request();
+        r2.inspectionId = ret2.Id;
+
+        Test.startTest();
+
+        InspectionReturnAction.run(
+            new List<InspectionReturnAction.Request>{r1, r2}
+        );
+
+        Test.stopTest();
+
+        List<Inspection__c> returns = [
+            SELECT Id, Booking__c
+            FROM Inspection__c
+            WHERE Id IN :new Set<Id>{ret1.Id, ret2.Id}
+        ];
+
+        Assert.areEqual(2, returns.size());
+    }
+}
 }
