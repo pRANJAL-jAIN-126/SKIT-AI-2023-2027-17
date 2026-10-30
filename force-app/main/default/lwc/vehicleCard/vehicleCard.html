@@ -1,0 +1,49 @@
+<template>
+    <article class="card">
+        <div class="media">
+            <template lwc:if={hasImage}>
+                <img src={v.imageUrl} alt={imageAlt} class="photo" loading="lazy" onerror={handleImageError} />
+            </template>
+            <template lwc:else>
+                <div class="placeholder" role="img" aria-label="No photo available">
+                    <lightning-icon icon-name="utility:image" size="large" alternative-text=""></lightning-icon>
+                    <span class="slds-text-body_small">Photo coming soon</span>
+                </div>
+            </template>
+        </div>
+        <div class="body">
+            <div class="heading">
+                <h3 class="slds-text-heading_small title">{title}</h3>
+                <template lwc:if={yearLabel}><span class="year">{yearLabel}</span></template>
+            </div>
+            <template lwc:if={v.category}>
+                <span class="slds-badge category">{v.category}</span>
+            </template>
+            <ul class="specs" aria-label="Specifications">
+                <template lwc:if={seatsLabel}><li>{seatsLabel}</li></template>
+                <template lwc:if={v.fuelType}><li>{v.fuelType}</li></template>
+                <template lwc:if={v.transmission}><li>{v.transmission}</li></template>
+            </ul>
+            <template lwc:if={branchLabel}>
+                <p class="branch slds-text-body_small">
+                    <lightning-icon icon-name="utility:location" size="xx-small" alternative-text="Branch"></lightning-icon>
+                    <span>{branchLabel}</span>
+                </p>
+            </template>
+            <div class="price">
+                <p><span class="rate">{dailyRate}</span> <span class="slds-text-body_small">/ day</span></p>
+                <template lwc:if={hasTotal}>
+                    <p class="total slds-text-body_small" data-id="total">{totalLabel} total for {daysLabel}</p>
+                </template>
+            </div>
+            <lightning-button
+                class="select-btn"
+                variant="brand"
+                label="Select"
+                title={selectLabel}
+                onclick={handleSelect}
+                stretch
+            ></lightning-button>
+        </div>
+    </article>
+</template>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Start_Not_In_Past_On_Create</fullName>
+    <active>true</active>
+    <description>TDD 6.8 (5 minute clock-skew grace; bypass for Rental_Data_Admin seed loads).</description>
+    <errorConditionFormula>AND(ISNEW(), Start_DateTime__c &lt; NOW() - (5/1440), TEXT(Source__c) &lt;&gt; &quot;Staff&quot;, NOT($Permission.Rental_Data_Admin))</errorConditionFormula>
+    <errorDisplayField>Start_DateTime__c</errorDisplayField>
+    <errorMessage>Start date/time cannot be in the past.</errorMessage>
+</ValidationRule>

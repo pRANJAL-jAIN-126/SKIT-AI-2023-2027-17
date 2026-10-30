@@ -1,0 +1,170 @@
+<template>
+    <section class="my-bookings" aria-labelledby="mb-heading">
+        <div class="header">
+            <h2 id="mb-heading" class="slds-text-heading_medium">My bookings</h2>
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh bookings"
+                title="Refresh"
+                onclick={loadBookings}
+            ></lightning-button-icon>
+        </div>
+
+        <template lwc:if={successMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_success msg" role="status" data-id="success">
+                <span>{successMessage}</span>
+            </div>
+        </template>
+        <template lwc:if={payError}>
+            <div class="slds-notify slds-notify_alert slds-alert_error msg" role="alert" data-id="pay-error">
+                <span>{payError}</span>
+            </div>
+        </template>
+
+        <template lwc:if={isLoading}>
+            <div class="spinner-holder">
+                <lightning-spinner alternative-text="Loading bookings" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template lwc:if={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-alert_error msg" role="alert" data-id="error">
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <template lwc:if={showEmpty}>
+            <div class="empty" data-id="empty">
+                <p>You have no bookings yet.</p>
+                <a class="slds-button slds-button_brand touch" href={fleetUrl} data-id="fleet-link">Find a car</a>
+            </div>
+        </template>
+
+        <template lwc:if={hasBookings}>
+            <ul class="list">
+                <template for:each={viewBookings} for:item="b">
+                    <li key={b.id}>
+                        <article class={b.cardClass} data-booking-id={b.id} tabindex="-1" aria-label={b.bookingNumber}>
+                            <div class="card-head">
+                                <div class="titles">
+                                    <h3 class="slds-text-heading_small title">{b.vehicleName}</h3>
+                                    <p class="slds-text-body_small muted">{b.bookingNumber}</p>
+                                </div>
+                                <span class={b.badgeClass} data-id="status-badge">{b.status}</span>
+                            </div>
+
+                            <template lwc:if={b.isOverdue}>
+                                <p class="overdue" role="alert" data-id="overdue">
+                                    <lightning-icon icon-name="utility:warning" size="x-small" alternative-text="Overdue"></lightning-icon>
+                                    Overdue — please return the car as soon as possible. Late fees apply.
+                                </p>
+                            </template>
+
+                            <dl class="details">
+                                <div class="row"><dt>Pickup</dt><dd>{b.startLabel}</dd></div>
+                                <div class="row"><dt>Return</dt><dd>{b.endLabel}</dd></div>
+                                <template lwc:if={b.branchName}>
+                                    <div class="row"><dt>Branch</dt><dd>{b.branchName}</dd></div>
+                                </template>
+                                <template lwc:if={b.daysLabel}>
+                                    <div class="row"><dt>Duration</dt><dd>{b.daysLabel}</dd></div>
+                                </template>
+                                <div class="row"><dt>Total</dt><dd>{b.amountLabel}</dd></div>
+                                <template lwc:if={b.paymentStatus}>
+                                    <div class="row"><dt>Payment</dt><dd>{b.paymentStatus}</dd></div>
+                                </template>
+                                <template lwc:if={b.hasLateFee}>
+                                    <div class="row"><dt>Late fee</dt><dd>{b.lateFeeLabel}</dd></div>
+                                </template>
+                                <template lwc:if={b.hasRefund}>
+                                    <div class="row"><dt>Refund</dt><dd>{b.refundLabel}</dd></div>
+                                </template>
+                                <template lwc:if={b.holdLabel}>
+                                    <div class="row"><dt>Hold expires</dt><dd>{b.holdLabel}</dd></div>
+                                </template>
+                            </dl>
+
+                            <div class="actions">
+                                <template lwc:if={b.canPay}>
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Pay now"
+                                        title={b.payLabel}
+                                        data-id={b.id}
+                                        data-action="pay"
+                                        disabled={b.isPaying}
+                                        onclick={handlePay}
+                                    ></lightning-button>
+                                </template>
+                                <template lwc:if={b.canCancel}>
+                                    <lightning-button
+                                        variant="destructive-text"
+                                        label="Cancel"
+                                        title={b.cancelLabel}
+                                        data-id={b.id}
+                                        data-action="cancel"
+                                        onclick={handleCancelClick}
+                                    ></lightning-button>
+                                </template>
+                            </div>
+                        </article>
+                    </li>
+                </template>
+            </ul>
+        </template>
+
+        <template lwc:if={showCancelPanel}>
+            <div class="backdrop" data-id="cancel-panel" onkeydown={handlePanelKeydown}>
+                <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cancel-heading">
+                    <h2 id="cancel-heading" class="slds-text-heading_medium">Cancel booking {cancelTarget.bookingNumber}?</h2>
+
+                    <template lwc:if={quoteLoading}>
+                        <div class="spinner-holder small">
+                            <lightning-spinner alternative-text="Checking refund" size="small"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template lwc:if={quote}>
+                        <dl class="details slds-m-top_small" data-id="quote">
+                            <div class="row"><dt>You will get back</dt><dd data-id="refund">{quoteView.refund}</dd></div>
+                            <template lwc:if={quoteView.hasRetained}>
+                                <div class="row"><dt>Cancellation charge</dt><dd>{quoteView.retained}</dd></div>
+                            </template>
+                        </dl>
+                        <template lwc:if={quoteView.fullRefund}>
+                            <p class="slds-m-top_x-small">You are within the free cancellation window — full refund.</p>
+                        </template>
+                        <template lwc:if={quoteView.message}>
+                            <p class="slds-m-top_x-small slds-text-body_small">{quoteView.message}</p>
+                        </template>
+                    </template>
+
+                    <template lwc:if={quoteError}>
+                        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert" data-id="quote-error">
+                            <span>{quoteError}</span>
+                        </div>
+                    </template>
+
+                    <div class="actions slds-m-top_medium">
+                        <lightning-button
+                            label="Keep booking"
+                            data-id="keep"
+                            disabled={cancelling}
+                            onclick={handleCloseCancel}
+                        ></lightning-button>
+                        <lightning-button
+                            variant="destructive"
+                            label="Yes, cancel"
+                            data-id="confirm-cancel"
+                            disabled={confirmCancelDisabled}
+                            onclick={handleConfirmCancel}
+                        ></lightning-button>
+                        <template lwc:if={cancelling}>
+                            <lightning-spinner alternative-text="Cancelling" size="small"></lightning-spinner>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </section>
+</template>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>R8WxLw1umy6ANtJ5e70PlcNH9hpF4naxeU3m6z6MEg8=_1</activeVersionIdentifier>
+    <description>TDD 7.6: compares Pickup and Return inspections and writes a short damage report. Called from Apex via ConnectApi.EinsteinLLM with inputs Input:Vehicle, Input:Pickup, Input:Return.</description>
+    <developerName>Damage_Report_Summary</developerName>
+    <masterLabel>Damage Report Summary</masterLabel>
+    <overridable>false</overridable>
+    <templateVersions>
+        <content>You are a vehicle inspection assistant for a car rental company.
+Compare the PICKUP and RETURN inspections and write a short damage report.
+
+Vehicle: {!$Input:Vehicle.Make__c} {!$Input:Vehicle.Model__c} ({!$Input:Vehicle.Registration_Number__c})
+
+PICKUP: odometer {!$Input:Pickup.Odometer__c} km, fuel {!$Input:Pickup.Fuel_Level__c},
+exterior {!$Input:Pickup.Exterior_Condition__c}, interior {!$Input:Pickup.Interior_Condition__c},
+notes: {!$Input:Pickup.Damage_Notes__c}
+
+RETURN: odometer {!$Input:Return.Odometer__c} km, fuel {!$Input:Return.Fuel_Level__c},
+exterior {!$Input:Return.Exterior_Condition__c}, interior {!$Input:Return.Interior_Condition__c},
+notes: {!$Input:Return.Damage_Notes__c}
+
+Output exactly these sections, each starting on a new line with its number:
+1) Distance driven: return odometer minus pickup odometer, in km.
+2) Fuel difference: pickup fuel level compared with return fuel level.
+3) New damage found: a bullet list of damage present at RETURN that was not present at PICKUP, or &apos;None&apos;.
+4) Severity: write this line EXACTLY as &quot;4) Severity: None&quot; or &quot;4) Severity: Minor&quot; or &quot;4) Severity: Major&quot; (one word only, no other text on this line).
+5) Recommended action: one short sentence.
+
+Do not invent damage that is not in the notes or condition fields. If a field is blank, treat it as not recorded.
+Use plain text only (no markdown headings, no bold). Keep it under 150 words.</content>
+        <inputs>
+            <apiName>Vehicle</apiName>
+            <definition>SOBJECT://Vehicle__c</definition>
+            <masterLabel>Vehicle</masterLabel>
+            <referenceName>Input:Vehicle</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>Pickup</apiName>
+            <definition>SOBJECT://Inspection__c</definition>
+            <masterLabel>Pickup</masterLabel>
+            <referenceName>Input:Pickup</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>Return</apiName>
+            <definition>SOBJECT://Inspection__c</definition>
+            <masterLabel>Return</masterLabel>
+            <referenceName>Input:Return</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>R8WxLw1umy6ANtJ5e70PlcNH9hpF4naxeU3m6z6MEg8=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

@@ -1,0 +1,86 @@
+<template>
+    <section class="status-card" aria-live="polite">
+        <template lwc:if={isChecking}>
+            <div class="center" data-id="checking">
+                <div class="spinner-holder">
+                    <lightning-spinner alternative-text="Confirming your payment" size="medium"></lightning-spinner>
+                </div>
+                <h2 class="slds-text-heading_medium">Confirming your payment…</h2>
+                <p class="slds-text-color_weak">This usually takes a few seconds. Please do not close this page.</p>
+            </div>
+        </template>
+
+        <template lwc:if={isSuccess}>
+            <div data-id="success">
+                <div class="banner success">
+                    <lightning-icon icon-name="utility:success" size="small" alternative-text="Success"></lightning-icon>
+                    <h2 class="slds-text-heading_medium">Payment received — you're booked!</h2>
+                </div>
+                <template lwc:if={booking}>
+                    <dl class="summary">
+                        <div class="row"><dt>Booking number</dt><dd data-id="booking-number">{summary.bookingNumber}</dd></div>
+                        <div class="row"><dt>Car</dt><dd>{summary.vehicleName}</dd></div>
+                        <template lwc:if={summary.branchName}>
+                            <div class="row"><dt>Pickup branch</dt><dd>{summary.branchName}</dd></div>
+                        </template>
+                        <div class="row"><dt>Pickup</dt><dd>{summary.start}</dd></div>
+                        <div class="row"><dt>Return</dt><dd>{summary.end}</dd></div>
+                        <div class="row"><dt>Amount paid</dt><dd data-id="amount">{summary.amount}</dd></div>
+                        <template lwc:if={summary.status}>
+                            <div class="row"><dt>Status</dt><dd>{summary.status}</dd></div>
+                        </template>
+                    </dl>
+                </template>
+                <template lwc:if={resultMessage}>
+                    <p class="slds-m-top_small">{resultMessage}</p>
+                </template>
+                <a class="slds-button slds-button_brand slds-m-top_medium touch" href={myBookingsUrl}>Go to My Bookings</a>
+            </div>
+        </template>
+
+        <template lwc:if={isFailed}>
+            <div data-id="failed">
+                <div class="banner failed">
+                    <lightning-icon icon-name="utility:error" size="small" alternative-text="Failed"></lightning-icon>
+                    <h2 class="slds-text-heading_medium">Payment was not completed</h2>
+                </div>
+                <p class="slds-m-top_small">
+                    {resultMessage}
+                </p>
+                <p class="slds-m-top_x-small">You can try paying again from My Bookings while your hold is active.</p>
+                <a class="slds-button slds-button_brand slds-m-top_medium touch" href={retryPayUrl}>Try again</a>
+            </div>
+        </template>
+
+        <template lwc:if={isProcessing}>
+            <div data-id="processing">
+                <div class="banner pending">
+                    <lightning-icon icon-name="utility:clock" size="small" alternative-text="Processing"></lightning-icon>
+                    <h2 class="slds-text-heading_medium">Your payment is still processing</h2>
+                </div>
+                <p class="slds-m-top_small">
+                    We have not received confirmation from the payment provider yet. This can take a minute. You will not
+                    be charged twice.
+                </p>
+                <div class="actions slds-m-top_medium">
+                    <lightning-button variant="brand" label="Check again" data-id="check-again" onclick={handleCheckAgain}></lightning-button>
+                    <a class="slds-button slds-button_neutral touch" href={myBookingsUrl}>My Bookings</a>
+                </div>
+            </div>
+        </template>
+
+        <template lwc:if={isError}>
+            <div data-id="error">
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <span>{errorMessage}</span>
+                </div>
+                <div class="actions slds-m-top_medium">
+                    <template lwc:if={sessionId}>
+                        <lightning-button variant="brand" label="Check again" data-id="check-again" onclick={handleCheckAgain}></lightning-button>
+                    </template>
+                    <a class="slds-button slds-button_neutral touch" href={myBookingsUrl}>My Bookings</a>
+                </div>
+            </div>
+        </template>
+    </section>
+</template>

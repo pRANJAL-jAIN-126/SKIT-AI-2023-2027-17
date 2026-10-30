@@ -178,4 +178,39 @@ private class AgentActionsTest {
             Assert.areEqual(0, [SELECT COUNT() FROM Booking__c]);
         }
     }
+    @IsTest
+static void createBookingHoldSuccessFlow() {
+    System.runAs(TestDataFactory.staffUser()) {
+        TestDataFactory.useTestConfig();
+
+        AgentCreateBooking.Req r = new AgentCreateBooking.Req();
+        r.customerContactId = rahul().Id;
+        r.vehicleId = [SELECT Id FROM Vehicle__c LIMIT 1].Id;
+        r.pickupDateTime = TestDataFactory.future(10, 4);
+        r.returnDateTime = TestDataFactory.future(11, 4);
+        r.sessionId = 'agent-session-step-2';
+
+        AgentCreateBooking.Res res = AgentCreateBooking.create(r);
+
+        System.assertEquals(true, res.success);
+        System.assertNotEquals(null, res.bookingNumber);
+        System.assertNotEquals(null, res.totalAmount);
+        System.assertNotEquals(null, res.holdExpiresAt);
+        System.assertNotEquals(null, res.paymentUrl);
+        System.assertNotEquals(null, res.verifyUrl);
+        System.assert(res.message.contains('Held as'));
+
+        Booking__c b = [
+            SELECT Status__c, Payment_Status__c, Source__c, Agent_Session_Id__c
+            FROM Booking__c
+            WHERE Name = :res.bookingNumber
+            LIMIT 1
+        ];
+
+        System.assertEquals('Pending Payment', b.Status__c);
+        System.assertEquals('Unpaid', b.Payment_Status__c);
+        System.assertEquals('Agentforce', b.Source__c);
+        System.assertEquals('agent-session-step-2', b.Agent_Session_Id__c);
+    }
+}
 }
