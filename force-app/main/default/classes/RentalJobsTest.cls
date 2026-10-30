@@ -78,11 +78,29 @@ private class RentalJobsTest {
 
     @IsTest
     static void schedulerCreatesAllJobsOnce() {
+        List<CronTrigger> before = [
+            SELECT CronJobDetail.Name
+            FROM CronTrigger
+            WHERE CronJobDetail.Name LIKE 'Rental %' AND State != 'DELETED'
+            WITH SYSTEM_MODE
+        ];
+        Set<String> existingNames = new Set<String>();
+        for (CronTrigger ct : before) {
+            existingNames.add(ct.CronJobDetail.Name);
+        }
+        Boolean holdJobsExist = false;
+        for (String name : existingNames) {
+            holdJobsExist = holdJobsExist || name.startsWith(BookingHoldExpiryBatch.JOB_PREFIX);
+        }
+        Integer expectedNewGroups = (holdJobsExist ? 0 : 1) +
+            (existingNames.contains(BookingOverdueBatch.JOB_NAME) ? 0 : 1) +
+            (existingNames.contains(LicenseRetentionBatch.JOB_NAME) ? 0 : 1);
+
         Test.startTest();
         List<String> first = RentalJobScheduler.scheduleAll();
         List<String> second = RentalJobScheduler.scheduleAll();
         Test.stopTest();
-        Assert.areEqual(3, first.size());
+        Assert.areEqual(expectedNewGroups, first.size(), 'only missing logical job groups should be scheduled');
         Assert.areEqual(0, second.size(), 'idempotent');
         Assert.areEqual(14, [SELECT COUNT() FROM CronTrigger WHERE CronJobDetail.Name LIKE 'Rental %']);
     }
