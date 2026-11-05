@@ -38,6 +38,9 @@ public with sharing class StripeService {
             // FR-07 / TC-17: no payment before KYC is verified
             throw new StripeException('Please verify your driving licence before paying.');
         }
+        if (!BookingService.hasLicenseValidThrough(b.Customer__r, b)) {
+            throw new StripeException('Your driving licence must be valid through the rental return date. Please update it before paying.');
+        }
         Rental_Config__mdt cfg = RentalConfig.get();
         Decimal amount = (b.Total_Amount__c ?? 0) + (b.Deposit_Amount__c ?? 0);
         Long minor = PricingService.toMinorUnits(amount);

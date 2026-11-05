@@ -76,10 +76,27 @@ private class AgentActionsTest {
         c.pickupDateTime = TestDataFactory.future(4, 4);
         c.returnDateTime = TestDataFactory.future(5, 4);
         AgentCreateBooking.Res held = AgentCreateBooking.create(c);
-        Assert.isTrue(held.message.contains('not verified yet'));
+        Assert.isTrue(held.message.contains('must be verified and valid through the rental return date'));
         Assert.isTrue(held.message.contains(held.verifyUrl));
         AgentGetPaymentLink.Res link = AgentGetPaymentLink.link(priya().Id, held.bookingNumber);
         Assert.isTrue(link.url.contains('/verify'), 'KYC link first');
+    }
+
+    @IsTest
+    static void expiredLicenceGetsVerificationLinkBeforePayment() {
+        TestDataFactory.useTestConfig();
+        Booking__c b = TestDataFactory.createBooking(
+            rahul().Id,
+            [SELECT Id FROM Vehicle__c LIMIT 1].Id,
+            TestDataFactory.future(4, 4),
+            TestDataFactory.future(6, 4),
+            'Pending Payment'
+        );
+        update new Contact(Id = rahul().Id, License_Expiry__c = Date.today().addDays(1));
+        AgentGetPaymentLink.Res link = AgentGetPaymentLink.link(rahul().Id, b.Name);
+        Assert.isTrue(link.url.contains('/verify'));
+        Assert.isTrue(link.message.contains('valid through the rental return date'));
+        Assert.isTrue(link.message.contains('/my-bookings?pay='));
     }
 
     @IsTest

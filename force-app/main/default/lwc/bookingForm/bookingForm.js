@@ -18,6 +18,12 @@ import {
 } from 'c/rentalUtils';
 
 const SF_ID = /^[a-zA-Z0-9]{15}(?:[a-zA-Z0-9]{3})?$/;
+const RENTAL_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+});
 
 export default class BookingForm extends NavigationMixin(LightningElement) {
     /** Vehicle record id when placed on a Vehicle__c record page. */
@@ -152,7 +158,22 @@ export default class BookingForm extends NavigationMixin(LightningElement) {
     }
 
     get kycVerified() {
-        return !!this.profile && this.profile.kycStatus === 'Verified';
+        return !!this.profile && this.profile.kycStatus === 'Verified' && this.licenseValidForTrip;
+    }
+
+    get licenseValidForTrip() {
+        if (!this.profile || !this.profile.licenseExpiry || !this.endDt) {
+            return false;
+        }
+        const returnTime = new Date(this.endDt);
+        if (Number.isNaN(returnTime.getTime())) {
+            return false;
+        }
+        const parts = RENTAL_DATE_FORMATTER.formatToParts(returnTime);
+        const year = parts.find((part) => part.type === 'year')?.value;
+        const month = parts.find((part) => part.type === 'month')?.value;
+        const day = parts.find((part) => part.type === 'day')?.value;
+        return !!year && !!month && !!day && this.profile.licenseExpiry > `${year}-${month}-${day}`;
     }
 
     get showKycNotice() {
@@ -160,6 +181,9 @@ export default class BookingForm extends NavigationMixin(LightningElement) {
     }
 
     get kycStatusLabel() {
+        if (this.profile && this.profile.kycStatus === 'Verified' && this.datesValid && !this.licenseValidForTrip) {
+            return this.profile.licenseExpiry ? 'Expires before return' : 'Expiry date unavailable';
+        }
         return (this.profile && this.profile.kycStatus) || 'Not Started';
     }
 
