@@ -26,7 +26,7 @@ public with sharing class PortalController {
                     Transmission__c, Fuel_Type__c, Daily_Rate__c, Security_Deposit__c, Image_URL__c, Status__c,
                     Branch__c, Branch__r.Name, Branch__r.City__c
                 FROM Vehicle__c
-                WHERE Id = :vehicleId AND Status__c != 'Retired'
+                WHERE Id = :vehicleId AND Status__c NOT IN ('Maintenance', 'Retired')
                 WITH USER_MODE
                 LIMIT 1
             ];

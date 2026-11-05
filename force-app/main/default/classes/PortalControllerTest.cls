@@ -69,6 +69,25 @@ private class PortalControllerTest {
     }
 
     @IsTest
+    static void vehicleDetailsExcludeUnavailableVehicles() {
+        for (String status : new List<String>{ 'Maintenance', 'Retired' }) {
+            Vehicle__c v = car();
+            v.Status__c = status;
+            update v;
+            System.runAs(TestDataFactory.staffUser()) {
+                TestDataFactory.useTestConfig();
+                loginAs(rahul().Id);
+                try {
+                    PortalController.getVehicleDetail(v.Id, null, null);
+                    Assert.fail(status + ' vehicles must not be available in vehicle details');
+                } catch (AuraHandledException e) {
+                    Assert.areEqual('This vehicle is not available.', e.getMessage());
+                }
+            }
+        }
+    }
+
+    @IsTest
     static void customerHoldsAndSeesOwnBookings() {
         System.runAs(TestDataFactory.staffUser()) {
             TestDataFactory.useTestConfig();
