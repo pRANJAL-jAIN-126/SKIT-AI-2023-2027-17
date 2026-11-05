@@ -93,7 +93,8 @@ private class AgentActionsTest {
             'Pending Payment'
         );
         update new Contact(Id = rahul().Id, License_Expiry__c = Date.today().addDays(1));
-        AgentGetPaymentLink.Res link = AgentGetPaymentLink.link(rahul().Id, b.Name);
+        String bookingNumber = [SELECT Name FROM Booking__c WHERE Id = :b.Id].Name;
+        AgentGetPaymentLink.Res link = AgentGetPaymentLink.link(rahul().Id, bookingNumber);
         Assert.isTrue(link.url.contains('/verify'));
         Assert.isTrue(link.message.contains('valid through the rental return date'));
         Assert.isTrue(link.message.contains('/my-bookings?pay='));
