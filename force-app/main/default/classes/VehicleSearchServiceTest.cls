@@ -154,4 +154,31 @@ private class VehicleSearchServiceTest {
         Set<Id> busy = VehicleSearchService.busyVehicleIds(s, e, new Set<Id>{ v.Id });
         Assert.areEqual(new Set<Id>{ v.Id }, busy);
     }
+
+    @IsTest
+    static void scopedOverdueCheckIgnoresUnrelatedVehicles() {
+        TestDataFactory.useTestConfig();
+        Vehicle__c overdueVehicle = vehicle('RJ14CD5678');
+        Vehicle__c other = vehicle('RJ14NP7531');
+        Contact c = [SELECT Id FROM Contact LIMIT 1];
+        Booking__c b = TestDataFactory.createBooking(
+            c.Id,
+            overdueVehicle.Id,
+            System.now().addDays(-3),
+            System.now().addHours(-2),
+            'Active'
+        );
+        b.Is_Overdue__c = true;
+        TestDataFactory.updateBypassingGuards(new List<SObject>{ b });
+
+        Datetime s = TestDataFactory.future(10, 4);
+        Assert.isFalse(
+            VehicleSearchService.busyVehicleIds(s, s.addDays(1), new Set<Id>{ other.Id }).contains(overdueVehicle.Id),
+            'scoped lookups must not load overdue vehicles outside their scope'
+        );
+        Assert.isTrue(
+            VehicleSearchService.busyVehicleIds(s, s.addDays(1), new Set<Id>{ overdueVehicle.Id }).contains(overdueVehicle.Id),
+            'overdue vehicles remain unavailable within scope'
+        );
+    }
 }
