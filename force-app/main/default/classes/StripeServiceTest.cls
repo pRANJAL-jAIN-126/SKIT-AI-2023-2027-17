@@ -110,6 +110,21 @@ private class StripeServiceTest {
     }
 
     @IsTest
+    static void checkoutBlockedWhenLicenceExpiresBeforeReturn() {
+        TestDataFactory.useTestConfig();
+        Booking__c b = booking();
+        update new Contact(Id = b.Customer__c, License_Expiry__c = Date.today().addDays(1));
+        try {
+            StripeService.createCheckoutSession(b.Id, b.Customer__c);
+            Assert.fail('licence must remain valid through the return date');
+        } catch (StripeException e) {
+            Assert.isTrue(e.getMessage().contains('valid through the rental return date'));
+        }
+        Assert.areEqual(0, StripeHttpMock.requests.size(), 'do not start checkout');
+        Assert.areEqual(0, [SELECT COUNT() FROM Payment__c], 'no payment record is created');
+    }
+
+    @IsTest
     static void checkoutGuards() {
         TestDataFactory.useTestConfig();
         Booking__c b = booking();
@@ -216,6 +231,25 @@ private class StripeServiceTest {
         Booking__c after = [SELECT Status__c, Payment_Status__c FROM Booking__c];
         Assert.areEqual('Pending Payment', after.Status__c, 'never confirmed without KYC (FR-07)');
         Assert.areEqual('Paid', after.Payment_Status__c, 'money is not lost (NFR-04)');
+        Assert.areEqual('Succeeded', [SELECT Status__c FROM Payment__c].Status__c);
+        Assert.areEqual(1, [SELECT COUNT() FROM Task WHERE WhatId = :b.Id]);
+    }
+
+    @IsTest
+    static void paidButExpiredLicenceHandsOverToStaff() {
+        TestDataFactory.useTestConfig();
+        Booking__c b = booking();
+        update new Contact(Id = b.Customer__c, License_Expiry__c = Date.today().addDays(1));
+        TestDataFactory.createPayment(b.Id, 'cs_test_mock123', 'Initiated', b.Grand_Total__c, null);
+        Test.setMock(HttpCalloutMock.class, StripeHttpMock.paid(b.Id));
+        Test.startTest();
+        RentalDtos.PaymentResultDTO r = StripeService.verifyAndConfirm('cs_test_mock123', b.Customer__c);
+        Test.stopTest();
+        Assert.areEqual('Pending', r.status, 'paid booking needs staff review when licence has expired');
+        Assert.isTrue(r.message.contains('valid through the rental return date'));
+        Booking__c after = [SELECT Status__c, Payment_Status__c FROM Booking__c];
+        Assert.areEqual('Pending Payment', after.Status__c);
+        Assert.areEqual('Paid', after.Payment_Status__c, 'record collected money without confirming an invalid trip');
         Assert.areEqual('Succeeded', [SELECT Status__c FROM Payment__c].Status__c);
         Assert.areEqual(1, [SELECT COUNT() FROM Task WHERE WhatId = :b.Id]);
     }

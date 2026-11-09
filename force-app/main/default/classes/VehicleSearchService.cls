@@ -117,16 +117,23 @@ public with sharing class VehicleSearchService {
                 ids.add((Id) ar.get('v'));
             }
             // 2) cars still out past their planned return are unavailable
-            for (Booking__c b : [
-                SELECT Vehicle__c
-                FROM Booking__c
-                WHERE Status__c = 'Active' AND Is_Overdue__c = TRUE
-                WITH SYSTEM_MODE
-            ]) {
-                ids.add(b.Vehicle__c);
-            }
-            if (scoped) {
-                ids.retainAll(scope);
+            List<AggregateResult> overdue = scoped
+                ? [
+                      SELECT Vehicle__c v
+                      FROM Booking__c
+                      WHERE Vehicle__c IN :scope AND Status__c = 'Active' AND Is_Overdue__c = TRUE
+                      WITH SYSTEM_MODE
+                      GROUP BY Vehicle__c
+                  ]
+                : [
+                      SELECT Vehicle__c v
+                      FROM Booking__c
+                      WHERE Status__c = 'Active' AND Is_Overdue__c = TRUE
+                      WITH SYSTEM_MODE
+                      GROUP BY Vehicle__c
+                  ];
+            for (AggregateResult ar : overdue) {
+                ids.add((Id) ar.get('v'));
             }
             return ids;
         }

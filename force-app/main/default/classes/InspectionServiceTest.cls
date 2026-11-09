@@ -27,7 +27,7 @@ private class InspectionServiceTest {
     }
 
     private static Booking__c booking() {
-        return [SELECT Id, Status__c, Vehicle__c FROM Booking__c LIMIT 1];
+        return [SELECT Id, Customer__c, Status__c, Vehicle__c FROM Booking__c LIMIT 1];
     }
 
     private static Inspection__c pickup(Booking__c b) {
@@ -36,15 +36,19 @@ private class InspectionServiceTest {
     }
 
     /** Puts the booking into Active with a pickup inspection (as flow Inspection_Pickup would). */
-    private static Booking__c activate() {
-        Booking__c b = booking();
+    private static Booking__c activate(Id bookingId) {
+        Booking__c b = [SELECT Id, Status__c, Vehicle__c FROM Booking__c WHERE Id = :bookingId];
         InspectionService.saveInspection(pickup(b), new List<Id>());
-        b = booking();
+        b = [SELECT Id, Status__c, Vehicle__c FROM Booking__c WHERE Id = :bookingId];
         if (b.Status__c != 'Active') {
             b.Status__c = 'Active';
             update b;
         }
         return b;
+    }
+
+    private static Booking__c activate() {
+        return activate(booking().Id);
     }
 
     @IsTest
@@ -267,50 +271,53 @@ private class InspectionServiceTest {
         }
     }
     @IsTest
-static void returnActionProcessesMultipleRequests() {
-    System.runAs(TestDataFactory.staffUser()) {
-        TestDataFactory.useTestConfig();
+    static void returnActionProcessesMultipleRequests() {
+        System.runAs(TestDataFactory.staffUser()) {
+            TestDataFactory.useTestConfig();
 
-        Booking__c b1 = activate();
-        Booking__c b2 = activate();
+            Booking__c b1 = booking();
+            Vehicle__c secondVehicle = TestDataFactory.createVehicle(
+                [SELECT Branch__c FROM Vehicle__c LIMIT 1].Branch__c,
+                'RJ14CD9999',
+                4000
+            );
+            Booking__c b2 = TestDataFactory.createBooking(
+                b1.Customer__c,
+                secondVehicle.Id,
+                TestDataFactory.future(4, 4),
+                TestDataFactory.future(6, 4),
+                'Confirmed'
+            );
+            b1 = activate(b1.Id);
+            b2 = activate(b2.Id);
 
-        Inspection__c ret1 = new Inspection__c(
-            Booking__c = b1.Id,
-            Type__c = 'Return',
-            Odometer__c = 10100
-        );
+            Inspection__c ret1 = new Inspection__c(
+                Booking__c = b1.Id,
+                Type__c = 'Return',
+                Odometer__c = 10100
+            );
+            Inspection__c ret2 = new Inspection__c(
+                Booking__c = b2.Id,
+                Type__c = 'Return',
+                Odometer__c = 10200
+            );
+            insert new List<Inspection__c>{ ret1, ret2 };
 
-        Inspection__c ret2 = new Inspection__c(
-            Booking__c = b2.Id,
-            Type__c = 'Return',
-            Odometer__c = 10200
-        );
+            InspectionReturnAction.Request r1 = new InspectionReturnAction.Request();
+            r1.inspectionId = ret1.Id;
+            InspectionReturnAction.Request r2 = new InspectionReturnAction.Request();
+            r2.inspectionId = ret2.Id;
 
-        insert new List<Inspection__c>{ret1, ret2};
+            Test.startTest();
+            InspectionReturnAction.run(new List<InspectionReturnAction.Request>{ r1, r2 });
+            Test.stopTest();
 
-        InspectionReturnAction.Request r1 =
-            new InspectionReturnAction.Request();
-        r1.inspectionId = ret1.Id;
-
-        InspectionReturnAction.Request r2 =
-            new InspectionReturnAction.Request();
-        r2.inspectionId = ret2.Id;
-
-        Test.startTest();
-
-        InspectionReturnAction.run(
-            new List<InspectionReturnAction.Request>{r1, r2}
-        );
-
-        Test.stopTest();
-
-        List<Inspection__c> returns = [
-            SELECT Id, Booking__c
-            FROM Inspection__c
-            WHERE Id IN :new Set<Id>{ret1.Id, ret2.Id}
-        ];
-
-        Assert.areEqual(2, returns.size());
+            List<Inspection__c> returns = [
+                SELECT Id, Booking__c
+                FROM Inspection__c
+                WHERE Id IN :new Set<Id>{ ret1.Id, ret2.Id }
+            ];
+            Assert.areEqual(2, returns.size());
+        }
     }
-}
 }

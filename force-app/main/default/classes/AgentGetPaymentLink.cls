@@ -42,9 +42,9 @@ public with sharing class AgentGetPaymentLink {
                     '). Please search again to create a new hold.';
                 return res;
             }
-            if (b.Customer__r.KYC_Status__c != 'Verified') {
+            if (!BookingService.hasLicenseValidThrough(b.Customer__r, b)) {
                 res.url = RentalConfig.verifyUrl(b.Id);
-                res.message = 'Your licence must be verified before payment. Verify here: ' + res.url +
+                res.message = 'Your licence must be verified and valid through the rental return date before payment. Verify here: ' + res.url +
                     ' . After that, pay here: ' + RentalConfig.paymentUrl(b.Id) + ' . The hold expires at ' +
                     AgentSupport.time(b.Hold_Expires_At__c) + '.';
                 return res;

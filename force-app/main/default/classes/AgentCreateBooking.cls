@@ -59,9 +59,9 @@ public with sharing class AgentCreateBooking {
             res.paymentUrl = RentalConfig.paymentUrl(b.Id);
             String held = 'Held as ' + b.Name + ' until ' + res.holdExpiresAt + '. Total ' + AgentSupport.inr(b.Total_Amount__c) +
                 ' incl. GST plus refundable deposit ' + AgentSupport.inr(b.Deposit_Amount__c) + '. ';
-            res.message = res.kycStatus == 'Verified'
+            res.message = BookingService.hasLicenseValidThrough(b.Customer__r, b)
                 ? held + 'Pay here to confirm: ' + res.paymentUrl + ' . The booking is confirmed only after payment.'
-                : held + 'Your licence is not verified yet: please verify here ' + res.verifyUrl + ' , then pay here ' + res.paymentUrl +
+                : held + 'Your licence must be verified and valid through the rental return date: please verify here ' + res.verifyUrl + ' , then pay here ' + res.paymentUrl +
                   ' to confirm. The booking is confirmed only after payment.';
         } catch (Exception e) {
             res.message = 'Hold not created: ' + RentalErrors.friendlyMessage(e);

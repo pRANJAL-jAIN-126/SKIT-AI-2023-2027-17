@@ -129,6 +129,9 @@ public with sharing class BookingService {
         if (customer == null || customer.KYC_Status__c != 'Verified') {
             throw new BookingException('Your driving licence is not verified yet.');
         }
+        if (!hasLicenseValidThrough(customer, locked)) {
+            throw new BookingException('Your driving licence must be valid through the rental return date. Please update it before payment.');
+        }
         if (BookingRepository.hasOverlap(locked.Vehicle__c, locked.Start_DateTime__c, locked.End_DateTime__c, locked.Id)) {
             throw new BookingException('The vehicle was booked by someone else after your hold expired.');
         }
@@ -151,6 +154,13 @@ public with sharing class BookingService {
     public static Boolean isPayable(Booking__c b) {
         return b.Status__c == ST_PENDING && b.Payment_Status__c != PAY_PAID && b.Hold_Expires_At__c != null &&
             b.Hold_Expires_At__c > System.now();
+    }
+
+    /** A verified licence must remain unexpired through the booking's local return date. */
+    public static Boolean hasLicenseValidThrough(Contact customer, Booking__c booking) {
+        return customer != null && booking != null && booking.End_DateTime__c != null &&
+            customer.KYC_Status__c == 'Verified' && customer.License_Expiry__c != null &&
+            customer.License_Expiry__c > booking.End_DateTime__c.date();
     }
 
     /** Refund preview for the confirmation dialog / agent read-back. */
