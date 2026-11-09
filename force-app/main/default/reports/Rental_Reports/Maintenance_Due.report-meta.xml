@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Vehicle__c</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Issue__c</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Due_Date__c</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Priority__c</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Status__c</field>
+    </columns>
+    <columns>
+        <field>Maintenance__c.Branch_Name__c</field>
+    </columns>
+    <description>Open / In Progress maintenance records sorted by due date (KPI count + table).</description>
+    <filter>
+        <criteriaItems>
+            <column>Maintenance__c.Status__c</column>
+            <columnToColumn>false</columnToColumn>
+            <isUnlocked>true</isUnlocked>
+            <operator>equals</operator>
+            <value>Open,In Progress</value>
+        </criteriaItems>
+        <language>en_US</language>
+    </filter>
+    <format>Tabular</format>
+    <name>Maintenance Due</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Maintenance__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <showGrandTotal>true</showGrandTotal>
+    <showSubTotals>true</showSubTotals>
+    <sortColumn>Maintenance__c.Due_Date__c</sortColumn>
+    <sortOrder>Asc</sortOrder>
+    <timeFrameFilter>
+        <dateColumn>Maintenance__c.Due_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

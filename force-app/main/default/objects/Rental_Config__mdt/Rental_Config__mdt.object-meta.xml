@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Business configuration for Smart Car Rental (TDD 6.7). Record: Default.</description>
+    <label>Rental Config</label>
+    <pluralLabel>Rental Configs</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

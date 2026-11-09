@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Daily_Rate_Must_Be_Positive</fullName>
+    <active>true</active>
+    <description>TDD 6.8</description>
+    <errorConditionFormula>OR(ISBLANK(Daily_Rate__c), Daily_Rate__c &lt;= 0)</errorConditionFormula>
+    <errorDisplayField>Daily_Rate__c</errorDisplayField>
+    <errorMessage>Daily rate must be greater than zero.</errorMessage>
+</ValidationRule>

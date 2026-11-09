@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Has_Booking</name>
+        <label>Has Booking?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Has_Odometer_Reading</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Booking</defaultConnectorLabel>
+        <rules>
+            <name>Booking_Linked</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Booking__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Booking_Active</targetReference>
+            </connector>
+            <label>Booking Linked</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Has_Odometer_Reading</name>
+        <label>Has Odometer Reading?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Reading</defaultConnectorLabel>
+        <rules>
+            <name>Odometer_And_Vehicle_Known</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Odometer__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>fxVehicleId</leftValueReference>
+                <operator>IsBlank</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Vehicle_Odometer</targetReference>
+            </connector>
+            <label>Odometer And Vehicle Known</label>
+        </rules>
+    </decisions>
+    <description>TDD §12 / Plan Phase 8 &amp; 10 – Inspection_Pickup. After a Pickup Inspection__c is inserted (validated by the Inspection trigger): parent Booking__c Confirmed =&gt; Active (vehicle becomes Rented via Booking_Status_VehicleSync) and Vehicle__c.Odometer__c = inspection Odometer__c.</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Inspection vehicle, falling back to the booking&apos;s vehicle.</description>
+        <name>fxVehicleId</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!$Record.Vehicle__c}, {!$Record.Booking__r.Vehicle__c})</expression>
+    </formulas>
+    <interviewLabel>Inspection Pickup {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Inspection Pickup</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>Only a Confirmed booking can start; re-inspections leave an Active booking unchanged.</description>
+        <name>Set_Booking_Active</name>
+        <label>Set Booking Active</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Has_Odometer_Reading</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Booking__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Confirmed</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Booking__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Vehicle_Odometer</name>
+        <label>Set Vehicle Odometer</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>fxVehicleId</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Odometer__c</field>
+            <value>
+                <elementReference>$Record.Odometer__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Vehicle__c</object>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Has_Booking</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Pickup</stringValue>
+            </value>
+        </filters>
+        <object>Inspection__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

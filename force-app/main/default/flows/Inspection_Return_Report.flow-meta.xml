@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Invocable Apex InspectionReturnAction: sets Booking Completed + Actual_Return__c, computes the late fee, updates the vehicle odometer and enqueues DamageReportQueueable (Prompt Builder damage report + approval) – the GenAI call runs asynchronously because it is a callout.</description>
+        <name>Complete_Return</name>
+        <label>Complete Return</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>InspectionReturnAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>inspectionId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>InspectionReturnAction</nameSegment>
+    </actionCalls>
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>TDD §12 / Plan Phase 8 &amp; 10 / D-09 – Inspection_Return_Report. After a Return Inspection__c is inserted: Apex InspectionReturnAction completes the booking (Actual_Return__c, late fee, odometer) and enqueues DamageReportQueueable, which generates the Damage_Report_Summary report, sets severity and submits Damage_Charge_Approval when required. No callouts in this transaction.</description>
+    <environments>Default</environments>
+    <interviewLabel>Inspection Return Report {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Inspection Return Report</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Complete_Return</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Return</stringValue>
+            </value>
+        </filters>
+        <object>Inspection__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>No_Open_Maintenance</name>
+        <label>No Open Maintenance?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Already Open</defaultConnectorLabel>
+        <rules>
+            <name>None_Open</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Open_Maintenance</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Scheduled_Service</targetReference>
+            </connector>
+            <label>None Open</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Service_Due_Within_7_Days</name>
+        <label>Service Due Within 7 Days?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Not Due Yet</defaultConnectorLabel>
+        <rules>
+            <name>Service_Due</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>fxServiceDue</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Open_Maintenance</targetReference>
+            </connector>
+            <label>Service Due</label>
+        </rules>
+    </decisions>
+    <description>TDD §12 / Plan Phase 8 – Maintenance_Auto_Create. Scheduled daily at 02:00 over non-Retired Vehicle__c records with a Next_Service_Date__c. When the service date is within 7 days (or past) and the vehicle has no Open / In Progress Maintenance__c, creates Maintenance__c (Issue &quot;Scheduled service due&quot;, Priority Medium, Due_Date__c = Next_Service_Date__c, Status Open).</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>fxServiceDue</name>
+        <dataType>Boolean</dataType>
+        <expression>{!$Record.Next_Service_Date__c} &lt;= (TODAY() + 7)</expression>
+    </formulas>
+    <interviewLabel>Maintenance Auto Create {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Maintenance Auto Create</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Scheduled_Service</name>
+        <label>Create Scheduled Service</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Due_Date__c</field>
+            <value>
+                <elementReference>$Record.Next_Service_Date__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Issue__c</field>
+            <value>
+                <stringValue>Scheduled service due</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority__c</field>
+            <value>
+                <stringValue>Medium</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status__c</field>
+            <value>
+                <stringValue>Open</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Vehicle__c</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Maintenance__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <name>Get_Open_Maintenance</name>
+        <label>Get Open Maintenance</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>No_Open_Maintenance</targetReference>
+        </connector>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
+        <filters>
+            <field>Vehicle__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Open</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>In Progress</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Maintenance__c</object>
+        <queriedFields>Id</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Service_Due_Within_7_Days</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status__c</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Retired</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Next_Service_Date__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Vehicle__c</object>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2026-10-08</startDate>
+            <startTime>02:00:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
