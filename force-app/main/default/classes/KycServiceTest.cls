@@ -215,7 +215,6 @@ private class KycServiceTest {
         Assert.areEqual('Not Submitted', p.kycStatus);
         Assert.isNull(KycService.profile(null).contactId);
     }
-
     @IsTest
     static void providerFailureReturnsErrorAndKeepsKycStatus() {
         TestDataFactory.useTestConfig();
@@ -229,17 +228,21 @@ private class KycServiceTest {
             'licence.jpg',
             EncodingUtil.base64Encode(Blob.valueOf('test-image'))
         );
+
         KycService.providerOverride = new FailingOcrProvider();
 
         try {
             Test.startTest();
-            RentalDtos.KycResultDTO result = KycService.verifyLicense(c.Id, cvId, null);
+            RentalDtos.KycResultDTO result =
+                KycService.verifyLicense(c.Id, cvId, null);
             Test.stopTest();
 
             System.assertEquals('Error', result.status);
             System.assert(result.reason.contains('OCR service temporarily unavailable.'));
 
-            Contact updated = [SELECT KYC_Status__c FROM Contact WHERE Id = :c.Id];
+            Contact updated = [
+                SELECT KYC_Status__c FROM Contact WHERE Id = :c.Id
+            ];
             System.assertEquals('Pending Review', updated.KYC_Status__c);
 
             KYC_Log__c log = [
