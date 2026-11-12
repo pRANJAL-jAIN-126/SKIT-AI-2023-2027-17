@@ -38,6 +38,28 @@
             </div>
         </template>
 
+        <template lwc:if={isReview}>
+            <div data-id="review">
+                <div class="banner pending">
+                    <lightning-icon icon-name="utility:clock" size="small" alternative-text="Review required"></lightning-icon>
+                    <h2 class="slds-text-heading_medium">Payment received — booking needs review</h2>
+                </div>
+                <p class="slds-m-top_small">{resultMessage}</p>
+                <a class="slds-button slds-button_brand slds-m-top_medium touch" href={myBookingsUrl}>Go to My Bookings</a>
+            </div>
+        </template>
+
+        <template lwc:if={isRefunded}>
+            <div data-id="refunded">
+                <div class="banner pending">
+                    <lightning-icon icon-name="utility:success" size="small" alternative-text="Refunded"></lightning-icon>
+                    <h2 class="slds-text-heading_medium">Payment refunded</h2>
+                </div>
+                <p class="slds-m-top_small">{resultMessage}</p>
+                <a class="slds-button slds-button_brand slds-m-top_medium touch" href={myBookingsUrl}>Go to My Bookings</a>
+            </div>
+        </template>
+
         <template lwc:if={isFailed}>
             <div data-id="failed">
                 <div class="banner failed">

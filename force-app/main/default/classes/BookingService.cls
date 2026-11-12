@@ -182,7 +182,14 @@ public with sharing class BookingService {
      */
     public static CancelOutcome cancel(Id bookingId, Id contactId) {
         Booking__c b = requireOwned(contactId, bookingId);
-        BookingRepository.lockForUpdate(b.Id);
+        Id ownedBookingId = b.Id;
+        if (BookingRepository.lockForUpdate(ownedBookingId) == null) {
+            throw new BookingException('Booking not found.');
+        }
+        b = BookingRepository.getOwned(contactId, ownedBookingId);
+        if (b == null) {
+            throw new BookingException('Booking not found.');
+        }
         if (!isCancellable(b)) {
             throw new BookingException('This booking can no longer be cancelled.');
         }

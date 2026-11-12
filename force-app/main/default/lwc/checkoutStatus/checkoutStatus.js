@@ -20,6 +20,8 @@ const STATE_CHECKING = 'checking';
 const STATE_SUCCESS = 'success';
 const STATE_FAILED = 'failed';
 const STATE_PROCESSING = 'processing';
+const STATE_REVIEW = 'review';
+const STATE_REFUNDED = 'refunded';
 const STATE_ERROR = 'error';
 
 export default class CheckoutStatus extends LightningElement {
@@ -81,6 +83,12 @@ export default class CheckoutStatus extends LightningElement {
     }
     get isProcessing() {
         return this.state === STATE_PROCESSING;
+    }
+    get isReview() {
+        return this.state === STATE_REVIEW;
+    }
+    get isRefunded() {
+        return this.state === STATE_REFUNDED;
     }
     get isError() {
         return this.state === STATE_ERROR;
@@ -144,6 +152,10 @@ export default class CheckoutStatus extends LightningElement {
                 this.state = STATE_SUCCESS;
             } else if (status === 'Failed') {
                 this.state = STATE_FAILED;
+            } else if (status === 'Review') {
+                this.state = STATE_REVIEW;
+            } else if (status === 'Refunded') {
+                this.state = STATE_REFUNDED;
             } else if (this.attempts < MAX_ATTEMPTS) {
                 this._timer = schedule(() => this.poll(), POLL_INTERVAL_MS);
             } else {

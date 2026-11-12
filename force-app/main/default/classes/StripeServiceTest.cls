@@ -226,8 +226,13 @@ private class StripeServiceTest {
         Test.setMock(HttpCalloutMock.class, StripeHttpMock.paid(b.Id));
         Test.startTest();
         RentalDtos.PaymentResultDTO r = StripeService.verifyAndConfirm('cs_test_mock123', b.Customer__c);
+        Integer callsAfterFirst = StripeHttpMock.requests.size();
+        RentalDtos.PaymentResultDTO retry = StripeService.verifyAndConfirm('cs_test_mock123', b.Customer__c);
         Test.stopTest();
-        Assert.areEqual('Pending', r.status);
+        Assert.areEqual('Review', r.status);
+        Assert.areEqual('Review', retry.status, 'a successful payment awaiting staff review must not be reported as confirmed');
+        Assert.isTrue(retry.message.contains('manual check'));
+        Assert.areEqual(callsAfterFirst, StripeHttpMock.requests.size(), 'a repeated result does not call Stripe again');
         Booking__c after = [SELECT Status__c, Payment_Status__c FROM Booking__c];
         Assert.areEqual('Pending Payment', after.Status__c, 'never confirmed without KYC (FR-07)');
         Assert.areEqual('Paid', after.Payment_Status__c, 'money is not lost (NFR-04)');
@@ -245,13 +250,27 @@ private class StripeServiceTest {
         Test.startTest();
         RentalDtos.PaymentResultDTO r = StripeService.verifyAndConfirm('cs_test_mock123', b.Customer__c);
         Test.stopTest();
-        Assert.areEqual('Pending', r.status, 'paid booking needs staff review when licence has expired');
+        Assert.areEqual('Review', r.status, 'paid booking needs staff review when licence has expired');
         Assert.isTrue(r.message.contains('valid through the rental return date'));
         Booking__c after = [SELECT Status__c, Payment_Status__c FROM Booking__c];
         Assert.areEqual('Pending Payment', after.Status__c);
         Assert.areEqual('Paid', after.Payment_Status__c, 'record collected money without confirming an invalid trip');
         Assert.areEqual('Succeeded', [SELECT Status__c FROM Payment__c].Status__c);
         Assert.areEqual(1, [SELECT COUNT() FROM Task WHERE WhatId = :b.Id]);
+    }
+
+    @IsTest
+    static void refundedPaymentDoesNotLookConfirmed() {
+        TestDataFactory.useTestConfig();
+        Booking__c b = booking();
+        TestDataFactory.createPayment(b.Id, 'cs_test_refunded', 'Refunded', b.Grand_Total__c, 'pi_test_refunded');
+
+        RentalDtos.PaymentResultDTO r = StripeService.verifyAndConfirm('cs_test_refunded', b.Customer__c);
+
+        Assert.areEqual('Refunded', r.status);
+        Assert.isTrue(r.message.contains('refunded'));
+        Assert.areEqual('Pending Payment', [SELECT Status__c FROM Booking__c WHERE Id = :b.Id].Status__c);
+        Assert.areEqual(0, StripeHttpMock.requests.size(), 'a saved refund result does not call Stripe again');
     }
 
     @IsTest
