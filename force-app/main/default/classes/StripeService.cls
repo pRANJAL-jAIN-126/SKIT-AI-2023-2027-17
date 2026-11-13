@@ -99,8 +99,22 @@ public with sharing class StripeService {
         if (p == null || p.Booking__r.Customer__c != contactId) {
             throw new StripeException('Payment not found.');
         }
-        if (p.Status__c == PAY_SUCCEEDED || p.Status__c == PAY_REFUNDED) {
-            return result(PAY_SUCCEEDED, 'Payment received. Your booking is confirmed.', p.Booking__c);
+        if (p.Status__c == PAY_REFUNDED) {
+            return result('Refunded', 'This payment has been refunded. Please check My Bookings for the booking status.', p.Booking__c);
+        }
+        if (p.Status__c == PAY_SUCCEEDED) {
+            if (
+                p.Booking__r.Status__c == BookingService.ST_CONFIRMED ||
+                p.Booking__r.Status__c == BookingService.ST_ACTIVE ||
+                p.Booking__r.Status__c == BookingService.ST_COMPLETED
+            ) {
+                return result(PAY_SUCCEEDED, 'Payment received. Your booking is confirmed.', p.Booking__c);
+            }
+            return result(
+                'Review',
+                'Your payment was received, but the booking needs a quick manual check. Our team will contact you shortly.',
+                p.Booking__c
+            );
         }
 
         Map<String, Object> session = send(
@@ -160,7 +174,7 @@ public with sharing class StripeService {
                 ' Confirm manually or refund the customer.'
             );
             return result(
-                'Pending',
+                'Review',
                 'Your payment was received, but the booking needs a quick manual check (' + reason +
                 ') Our team will contact you shortly.',
                 p.Booking__c
