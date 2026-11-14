@@ -136,6 +136,7 @@ private class VehicleSearchServiceTest {
             Assert.areEqual(10500, result[0].subtotal);
             Assert.areEqual(1890, result[0].tax, '18% GST');
             Assert.areEqual(12390 + 5000, result[0].grandTotal);
+            Assert.isNull(result[0].registrationNumber, 'number plate is not sent to the portal (guest FLS has no access)');
 
             r.maxDailyRate = 1000;
             Assert.areEqual(0, VehicleSearchService.searchWithQuotes(r).size());

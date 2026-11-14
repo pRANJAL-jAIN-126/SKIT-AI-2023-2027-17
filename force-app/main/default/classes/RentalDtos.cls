@@ -30,7 +30,8 @@ public with sharing class RentalDtos {
         public VehicleDTO(Vehicle__c v, PricingService.Quote q) {
             id = v.Id;
             name = v.Name;
-            registrationNumber = v.Registration_Number__c;
+            // registrationNumber is deliberately not populated: this DTO is returned to guest users (portal search,
+            // Agentforce), whose profile has no read access to Registration_Number__c, and no UI uses the plate.
             make = v.Make__c;
             model = v.Model__c;
             year = v.Year__c;
