@@ -6,14 +6,8 @@ export default class VehicleCard extends LightningElement {
     @api totalPrice;
     @api days;
 
-    imageFailed = false;
-
     get v() {
         return this.vehicle || {};
-    }
-
-    get hasImage() {
-        return !!this.v.imageUrl && !this.imageFailed;
     }
 
     get title() {
@@ -70,10 +64,6 @@ export default class VehicleCard extends LightningElement {
 
     get selectLabel() {
         return `Select ${this.title}`;
-    }
-
-    handleImageError() {
-        this.imageFailed = true;
     }
 
     handleSelect() {

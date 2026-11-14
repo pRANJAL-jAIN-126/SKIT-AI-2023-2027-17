@@ -5,11 +5,14 @@ import getCustomerProfile from '@salesforce/apex/PortalController.getCustomerPro
 import createHold from '@salesforce/apex/PortalController.createHold';
 import startCheckout from '@salesforce/apex/PortalController.startCheckout';
 import basePath from '@salesforce/community/basePath';
+import LOCALE from '@salesforce/i18n/locale';
 import {
     buildUrl,
     createDebouncer,
+    dateBadInputMessage,
     formatDateTime,
     formatMoney,
+    getUrlDateParam,
     getUrlParam,
     redirectTo,
     reduceError,
@@ -57,8 +60,8 @@ export default class BookingForm extends NavigationMixin(LightningElement) {
         if (!pageRef) {
             return;
         }
-        const start = toIso(getUrlParam(pageRef, 'start'));
-        const end = toIso(getUrlParam(pageRef, 'end'));
+        const start = getUrlDateParam(pageRef, 'start');
+        const end = getUrlDateParam(pageRef, 'end');
         if (start && !this.startDt) {
             this.startDt = start;
         }
@@ -117,6 +120,22 @@ export default class BookingForm extends NavigationMixin(LightningElement) {
     get vehicleTitle() {
         const v = this.vehicle || {};
         return [v.make, v.model].filter(Boolean).join(' ') || v.name || 'Vehicle';
+    }
+
+    get vehiclePhotoAlt() {
+        return `${this.vehicleTitle} photo`;
+    }
+
+    get dateBadInputMessage() {
+        return dateBadInputMessage(LOCALE);
+    }
+
+    /** Back-to-search link that keeps the trip dates the customer already chose. */
+    get searchUrl() {
+        return buildUrl(basePath, '/fleet', {
+            start: this.startDt ? toIso(this.startDt) : null,
+            end: this.endDt ? toIso(this.endDt) : null
+        });
     }
 
     get vehicleMeta() {

@@ -1,16 +1,6 @@
 <template>
     <article class="card">
-        <div class="media">
-            <template lwc:if={hasImage}>
-                <img src={v.imageUrl} alt={imageAlt} class="photo" loading="lazy" onerror={handleImageError} />
-            </template>
-            <template lwc:else>
-                <div class="placeholder" role="img" aria-label="No photo available">
-                    <lightning-icon icon-name="utility:image" size="large" alternative-text=""></lightning-icon>
-                    <span class="slds-text-body_small">Photo coming soon</span>
-                </div>
-            </template>
-        </div>
+        <c-vehicle-photo class="media" src={v.imageUrl} alt={imageAlt} variant="card"></c-vehicle-photo>
         <div class="body">
             <div class="heading">
                 <h3 class="slds-text-heading_small title">{title}</h3>

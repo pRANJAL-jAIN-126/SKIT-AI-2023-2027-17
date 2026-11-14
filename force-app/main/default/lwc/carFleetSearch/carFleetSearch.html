@@ -7,20 +7,28 @@
                 <lightning-input
                     type="datetime"
                     label="Pickup date and time"
+                    class="date-field"
                     name="pickupDateTime"
                     data-field="pickupDateTime"
+                    data-validate
                     value={pickupDateTime}
                     timezone="Asia/Kolkata"
+                    message-when-bad-input={dateBadInputMessage}
+                    message-when-value-missing="Choose a pickup date and time."
                     onchange={handleFilterChange}
                     required
                 ></lightning-input>
                 <lightning-input
                     type="datetime"
                     label="Return date and time"
+                    class="date-field"
                     name="returnDateTime"
                     data-field="returnDateTime"
+                    data-validate
                     value={returnDateTime}
                     timezone="Asia/Kolkata"
+                    message-when-bad-input={dateBadInputMessage}
+                    message-when-value-missing="Choose a return date and time."
                     onchange={handleFilterChange}
                     required
                 ></lightning-input>
@@ -33,6 +41,7 @@
                     onchange={handleFilterChange}
                 ></lightning-combobox>
                 <lightning-combobox
+                    class={extraClass}
                     label="Category"
                     name="category"
                     data-field="category"
@@ -41,17 +50,24 @@
                     onchange={handleFilterChange}
                 ></lightning-combobox>
                 <lightning-input
+                    class={extraClass}
                     type="number"
                     label="Minimum seats"
                     name="seats"
                     data-field="seats"
+                    data-validate
                     value={seats}
                     min="1"
-                    max="12"
+                    max="9"
                     step="1"
+                    message-when-bad-input="Enter seats as a whole number, e.g. 5."
+                    message-when-range-underflow="Seats must be at least 1."
+                    message-when-range-overflow="Our largest cars have 9 seats."
+                    message-when-step-mismatch="Enter seats as a whole number, e.g. 5."
                     onchange={handleFilterChange}
                 ></lightning-input>
                 <lightning-combobox
+                    class={extraClass}
                     label="Transmission"
                     name="transmission"
                     data-field="transmission"
@@ -60,6 +76,7 @@
                     onchange={handleFilterChange}
                 ></lightning-combobox>
                 <lightning-combobox
+                    class={extraClass}
                     label="Fuel type"
                     name="fuelType"
                     data-field="fuelType"
@@ -68,22 +85,41 @@
                     onchange={handleFilterChange}
                 ></lightning-combobox>
                 <lightning-input
+                    class={extraClass}
                     type="number"
                     label="Max price per day (INR)"
                     name="maxDailyRate"
                     data-field="maxDailyRate"
+                    data-validate
                     value={maxDailyRate}
-                    min="0"
+                    min="1"
                     step="1"
+                    message-when-bad-input="Enter a price in rupees, e.g. 3000."
+                    message-when-range-underflow="Max price must be more than ₹0."
+                    message-when-step-mismatch="Enter a whole number of rupees, e.g. 3000."
                     formatter="decimal"
                     onchange={handleFilterChange}
                 ></lightning-input>
+            </div>
+
+            <div class="more-toggle">
+                <lightning-button
+                    variant="base"
+                    label={moreFiltersLabel}
+                    icon-name={moreFiltersIcon}
+                    aria-expanded={moreFiltersExpanded}
+                    data-id="more-filters"
+                    onclick={handleToggleMoreFilters}
+                ></lightning-button>
             </div>
 
             <template lwc:if={dateError}>
                 <p class="slds-text-color_error slds-m-top_x-small date-error" role="alert" data-id="date-error">
                     {dateError}
                 </p>
+            </template>
+            <template lwc:if={filterError}>
+                <p class="slds-text-color_error slds-m-top_x-small" role="alert" data-id="filter-error">{filterError}</p>
             </template>
             <template lwc:if={showDatePrompt}>
                 <p class="slds-text-color_weak slds-m-top_x-small" data-id="date-prompt">

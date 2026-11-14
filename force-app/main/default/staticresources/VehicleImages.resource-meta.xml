@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>application/zip</contentType>
+    <description>Vehicle photos (960x600, 16:10) from Wikimedia Commons under CC0 / public domain / CC BY / CC BY-SA. Credits: lwc/vehiclePhoto/credits.js and docs/VEHICLE-IMAGE-CREDITS.md. Referenced from Vehicle__c.Image_URL__c as a bare file name, e.g. tata-punch.jpg.</description>
+</StaticResource>

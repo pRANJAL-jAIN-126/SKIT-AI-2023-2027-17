@@ -2,9 +2,12 @@ import { LightningElement, api, wire } from 'lwc';
 import { CurrentPageReference, NavigationMixin } from 'lightning/navigation';
 import searchVehicles from '@salesforce/apex/PortalController.searchVehicles';
 import basePath from '@salesforce/community/basePath';
+import LOCALE from '@salesforce/i18n/locale';
 import {
     buildUrl,
     createDebouncer,
+    dateBadInputMessage,
+    getUrlDateParam,
     getUrlParam,
     reduceError,
     toIso,
@@ -14,6 +17,7 @@ import {
 
 const DEBOUNCE_MS = 400;
 const ANY = '';
+const INVALID_FILTERS_MESSAGE = 'Fix the highlighted filters to search.';
 
 const withAny = (values) => [{ label: 'Any', value: ANY }, ...values.map((v) => ({ label: v, value: v }))];
 
@@ -33,7 +37,9 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
     vehicles = [];
     isLoading = false;
     errorMessage = null;
+    filterError = null;
     hasSearched = false;
+    dateBadInputMessage = dateBadInputMessage(LOCALE);
 
     cityOptions = withAny(['Jaipur', 'Delhi']);
     categoryOptions = withAny(['Hatchback', 'Sedan', 'SUV', 'MUV', 'Luxury', 'Electric']);
@@ -51,8 +57,8 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
             return;
         }
         this._stateApplied = true;
-        const start = toIso(getUrlParam(pageRef, 'start'));
-        const end = toIso(getUrlParam(pageRef, 'end'));
+        const start = getUrlDateParam(pageRef, 'start');
+        const end = getUrlDateParam(pageRef, 'end');
         const city = getUrlParam(pageRef, 'city');
         if (start) {
             this.pickupDateTime = start;
@@ -96,16 +102,52 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
         return !this.pickupDateTime && !this.returnDateTime;
     }
 
+    // ---------- "More filters" (collapsed on phones only, see CSS) ----------
+
+    showMoreFilters = false;
+
+    get extraClass() {
+        return this.showMoreFilters ? 'extra' : 'extra extra-collapsed';
+    }
+
+    get activeExtraFilterCount() {
+        return [this.category, this.seats, this.transmission, this.fuelType, this.maxDailyRate].filter(
+            (v) => v !== null && v !== undefined && v !== ANY
+        ).length;
+    }
+
+    get moreFiltersLabel() {
+        if (this.showMoreFilters) {
+            return 'Fewer filters';
+        }
+        const n = this.activeExtraFilterCount;
+        return n ? `More filters (${n} active)` : 'More filters';
+    }
+
+    get moreFiltersIcon() {
+        return this.showMoreFilters ? 'utility:chevronup' : 'utility:chevrondown';
+    }
+
+    get moreFiltersExpanded() {
+        return this.showMoreFilters ? 'true' : 'false';
+    }
+
+    handleToggleMoreFilters() {
+        this.showMoreFilters = !this.showMoreFilters;
+    }
+
     get searchDisabled() {
         return !this.datesValid || this.isLoading;
     }
 
     get hasResults() {
-        return !this.isLoading && !this.errorMessage && this.vehicles.length > 0;
+        return !this.isLoading && !this.errorMessage && !this.filterError && this.vehicles.length > 0;
     }
 
     get showEmpty() {
-        return this.hasSearched && !this.isLoading && !this.errorMessage && this.vehicles.length === 0;
+        return (
+            this.hasSearched && !this.isLoading && !this.errorMessage && !this.filterError && this.vehicles.length === 0
+        );
     }
 
     get resultCountLabel() {
@@ -120,21 +162,90 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
         const value = event.detail && event.detail.value !== undefined ? event.detail.value : event.target.value;
         this[field] = value === undefined ? null : value;
         this._dirty = true;
+        this.filterError = null;
         this.scheduleSearch();
     }
 
     handleSearchClick() {
         this._debouncer.cancel();
+        if (!this.validateFilters(true)) {
+            this.blockSearch();
+            return;
+        }
         this.runSearch();
     }
 
+    /** Resets every search criterion (dates, city, filters), the typed text, validation messages and results. */
     handleReset() {
+        this._debouncer.cancel();
+        this._requestSeq++; // ignore any search still in flight
+        this.pickupDateTime = null;
+        this.returnDateTime = null;
+        this.branchCity = this.defaultCity || ANY;
         this.category = ANY;
         this.seats = null;
         this.transmission = ANY;
         this.fuelType = ANY;
         this.maxDailyRate = null;
-        this.scheduleSearch();
+        this.vehicles = [];
+        this.isLoading = false;
+        this.errorMessage = null;
+        this.filterError = null;
+        this.hasSearched = false;
+        this._dirty = false;
+        // A number field holding unparseable text (e.g. "abc") already reports value '' to lightning-input, so
+        // setting it to null again is "no change" and the typed text stays on screen. Give number fields a
+        // different value first, then the real (empty) value after that render, then re-check validity so the
+        // red messages disappear. Each .then runs after the re-render queued by the previous step.
+        this.filterFields().forEach((field) => {
+            field.value = field.type === 'number' ? '0' : null;
+            if (typeof field.setCustomValidity === 'function') {
+                field.setCustomValidity('');
+            }
+        });
+        Promise.resolve()
+            .then(() => {
+                this.filterFields().forEach((field) => {
+                    if (field.dataset.field && field.tagName && field.tagName.toLowerCase() === 'lightning-input') {
+                        field.value = this[field.dataset.field];
+                    }
+                });
+            })
+            .then(() => {
+                this.filterFields().forEach((field) => {
+                    if (typeof field.reportValidity === 'function' && !field.required) {
+                        field.reportValidity();
+                    }
+                });
+            });
+    }
+
+    filterFields() {
+        return [...this.template.querySelectorAll('[data-validate]')];
+    }
+
+    /**
+     * True when every filter field holds a usable value. With report=true each invalid field shows its own message.
+     * Only an explicit `false` counts as invalid (lightning base components always return a boolean).
+     */
+    validateFilters(report = false) {
+        let ok = true;
+        this.filterFields().forEach((field) => {
+            const fn = report ? field.reportValidity : field.checkValidity;
+            if (typeof fn === 'function' && fn.call(field) === false) {
+                ok = false;
+            }
+        });
+        return ok;
+    }
+
+    blockSearch() {
+        this._requestSeq++;
+        this.isLoading = false;
+        this.vehicles = [];
+        this.hasSearched = false;
+        this.filterError = INVALID_FILTERS_MESSAGE;
+        this.showMoreFilters = true; // never hide the field that is blocking the search
     }
 
     handleVehicleSelect(event) {
@@ -159,7 +270,13 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
             this._debouncer.cancel();
             return;
         }
-        this._debouncer.run(() => this.runSearch());
+        this._debouncer.run(() => {
+            if (!this.validateFilters(true)) {
+                this.blockSearch();
+                return;
+            }
+            this.runSearch();
+        });
     }
 
     buildRequest() {
@@ -179,6 +296,12 @@ export default class CarFleetSearch extends NavigationMixin(LightningElement) {
         if (!this.datesValid) {
             return;
         }
+        // Never search with a filter the customer typed but we could not understand (e.g. "abc" seats, -500 price).
+        if (!this.validateFilters(false)) {
+            this.blockSearch();
+            return;
+        }
+        this.filterError = null;
         const seq = ++this._requestSeq;
         this.isLoading = true;
         this.errorMessage = null;

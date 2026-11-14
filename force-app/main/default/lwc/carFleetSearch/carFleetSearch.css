@@ -18,7 +18,26 @@
 .filter-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    gap: 0.75rem 1rem;
+    /* Desktop datetime inputs have an extra "Date / Time" label row; aligning to the end puts every input box
+       on the same line instead of leaving combobox cells floating above an empty band. */
+    align-items: end;
+}
+
+.more-toggle {
+    display: none;
+}
+
+/* Phones: keep dates + city visible and tuck the other filters behind "More filters" so results stay close. */
+@media (max-width: 599px) {
+    .more-toggle {
+        display: block;
+        margin-top: 0.75rem;
+    }
+
+    .extra-collapsed {
+        display: none;
+    }
 }
 
 @media (min-width: 600px) {

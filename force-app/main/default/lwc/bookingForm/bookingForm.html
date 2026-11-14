@@ -7,17 +7,18 @@
         </template>
 
         <template lwc:if={loadError}>
-            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert" data-id="load-error">
-                <span>{loadError}</span>
+            <div class="unavailable" role="alert" data-id="load-error">
+                <lightning-icon icon-name="utility:warning" size="small" alternative-text="" class="unavailable-icon"></lightning-icon>
+                <h2 class="slds-text-heading_medium">Car not available</h2>
+                <p>{loadError}</p>
+                <a class="slds-button slds-button_brand back-link" href={searchUrl} data-id="back-to-search">Back to search</a>
             </div>
         </template>
 
         <template lwc:if={hasVehicle}>
             <div class="layout">
                 <div class="summary">
-                    <template lwc:if={vehicle.imageUrl}>
-                        <img class="photo" src={vehicle.imageUrl} alt={vehicleTitle} />
-                    </template>
+                    <c-vehicle-photo class="photo" src={vehicle.imageUrl} alt={vehiclePhotoAlt} variant="hero"></c-vehicle-photo>
                     <h2 id="booking-heading" class="slds-text-heading_medium title" data-id="vehicle-title">{vehicleTitle}</h2>
                     <p class="slds-text-body_small meta">{vehicleMeta}</p>
                     <template lwc:if={branchLabel}>
@@ -35,6 +36,8 @@
                             data-field="startDt"
                             value={startDt}
                             timezone="Asia/Kolkata"
+                            message-when-bad-input={dateBadInputMessage}
+                            message-when-value-missing="Choose a pickup date and time."
                             onchange={handleDateChange}
                             required
                         ></lightning-input>
@@ -44,6 +47,8 @@
                             data-field="endDt"
                             value={endDt}
                             timezone="Asia/Kolkata"
+                            message-when-bad-input={dateBadInputMessage}
+                            message-when-value-missing="Choose a return date and time."
                             onchange={handleDateChange}
                             required
                         ></lightning-input>
@@ -96,7 +101,7 @@
 
                     <template lwc:if={showLoginPrompt}>
                         <div class="login-prompt slds-m-top_small" role="alert" data-id="login-prompt">
-                            <p>Please log in or create an account to book this car.</p>
+                            <p>Please log in to book this car.</p>
                             <div class="actions">
                                 <a class="slds-button slds-button_brand" href={loginUrl} data-id="login-link">Log in</a>
                                 <lightning-button label="Not now" onclick={handleCloseLoginPrompt}></lightning-button>

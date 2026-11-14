@@ -1,0 +1,71 @@
+<template>
+  <header class="header" onkeydown={handleKeydown}>
+    <div class="bar">
+      <a class="brand" href={homeUrl} data-id="brand">
+        <lightning-icon
+          icon-name="utility:location"
+          size="small"
+          alternative-text=""
+          class="brand-icon"
+        ></lightning-icon>
+        <span class="brand-name">{brandName}</span>
+      </a>
+      <button
+        class="menu-toggle slds-button slds-button_icon slds-button_icon-border"
+        type="button"
+        aria-controls="site-menu"
+        aria-expanded={menuExpanded}
+        title={menuToggleLabel}
+        data-id="menu-toggle"
+        onclick={handleToggleMenu}
+      >
+        <lightning-icon
+          icon-name={menuIcon}
+          size="x-small"
+          alternative-text={menuToggleLabel}
+        ></lightning-icon>
+      </button>
+      <nav id="site-menu" class={menuClass} aria-label="Main">
+        <ul class="links">
+          <template for:each={links} for:item="l">
+            <li key={l.key}>
+              <a
+                class={l.className}
+                href={l.href}
+                aria-current={l.ariaCurrent}
+                data-id={l.key}
+                >{l.label}</a
+              >
+            </li>
+          </template>
+        </ul>
+        <div class="account">
+          <template lwc:if={isGuest}>
+            <a
+              class="slds-button slds-button_neutral account-btn"
+              href={loginUrl}
+              data-id="login"
+              >Log in</a
+            >
+            <template lwc:if={showSignUpLink}>
+              <a
+                class="slds-button slds-button_brand account-btn"
+                href={signUpUrl}
+                data-id="signup"
+                >Sign up</a
+              >
+            </template>
+          </template>
+          <template lwc:else>
+            <a
+              class="slds-button slds-button_neutral account-btn"
+              href={logoutUrl}
+              data-id="logout"
+              >Log out</a
+            >
+          </template>
+        </div>
+      </nav>
+    </div>
+  </header>
+</template>

@@ -130,6 +130,41 @@ export function getUrlParam(pageRef, name) {
     }
 }
 
+/**
+ * Reads a date/time URL parameter as an ISO string, or null.
+ * The page-reference state and the real query string are both tried and the first value that parses wins.
+ * Needed because hand-typed links with unencoded ":" (e.g. ?start=2026-11-20T04:30:00.000Z) reach the LWR
+ * page-reference state in a form that does not parse, while window.location still holds the correct value.
+ */
+export function getUrlDateParam(pageRef, name) {
+    const candidates = [];
+    const state = pageRef && pageRef.state;
+    if (state && state[name] !== undefined && state[name] !== null && state[name] !== '') {
+        candidates.push(state[name]);
+    }
+    try {
+        const v = new URLSearchParams(window.location.search).get(name);
+        if (v) {
+            candidates.push(v);
+        }
+    } catch {
+        // no window (tests / non-browser container)
+    }
+    for (const raw of candidates) {
+        let value = raw;
+        try {
+            value = decodeURIComponent(String(raw));
+        } catch {
+            value = String(raw);
+        }
+        const iso = toIso(value);
+        if (iso) {
+            return iso;
+        }
+    }
+    return null;
+}
+
 /** Builds a site-relative URL with encoded query parameters (null values skipped). */
 export function buildUrl(base, path, params) {
     let url = `${base || ''}${path}`;
@@ -189,6 +224,45 @@ export function toNumberOrNull(value) {
     }
     const n = Number(value);
     return Number.isNaN(n) ? null : n;
+}
+
+/**
+ * Message for a date/time field whose typed text cannot be parsed. The example date follows the user's locale,
+ * which is the format lightning-input shows ("Nov 20, 2026" for en-US). The value sent to Apex is always ISO-8601.
+ */
+export function dateBadInputMessage(locale) {
+    let example = 'Nov 20, 2026';
+    try {
+        example = new Intl.DateTimeFormat(locale || undefined, { dateStyle: 'medium', timeZone: 'UTC' }).format(
+            new Date(Date.UTC(2026, 10, 20))
+        );
+    } catch {
+        // keep the en-US example
+    }
+    return `Enter a date like ${example}, or pick one from the calendar.`;
+}
+
+const BUNDLED_IMAGE =/^[A-Za-z0-9][A-Za-z0-9_-]*(\/[A-Za-z0-9][A-Za-z0-9_-]*)*\.(jpe?g|png|webp|gif)$/i;
+
+/**
+ * Turns a Vehicle__c.Image_URL__c value into a URL the browser can load, or null when it is unusable.
+ * - "tata-punch.jpg" (bare file name) -> file inside the VehicleImages static resource (resourceBase)
+ * - "https://..." -> used as-is
+ * - "/path" (site-relative) -> used as-is
+ * Anything else (blank, "javascript:", "..", other schemes) returns null so callers show the fallback.
+ */
+export function resolveImageUrl(value, resourceBase) {
+    const v = typeof value === 'string' ? value.trim() : '';
+    if (!v || v.includes('..') || /[\s"'<>\\]/.test(v)) {
+        return null;
+    }
+    if (/^https:\/\//i.test(v) || (v.startsWith('/') && !v.startsWith('//'))) {
+        return v;
+    }
+    if (BUNDLED_IMAGE.test(v) && resourceBase) {
+        return `${String(resourceBase).replace(/\/+$/, '')}/${v}`;
+    }
+    return null;
 }
 
 export const GENERIC_ERROR_MESSAGE = GENERIC_ERROR;

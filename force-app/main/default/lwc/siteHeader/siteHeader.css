@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.header {
+  background: var(--slds-g-color-surface-container-1, #fff);
+  border-bottom: 1px solid var(--slds-g-color-border-1, #dddbda);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+  min-height: 3.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #032d60;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.brand:hover,
+.brand:focus {
+  text-decoration: none;
+}
+
+.brand-icon {
+  --slds-c-icon-color-foreground-default: #0b5cab;
+}
+
+.menu-toggle {
+  display: none;
+  margin-left: auto;
+  width: 44px;
+  height: 44px;
+}
+
+.menu {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.links {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border-radius: 0.25rem;
+  color: #181818;
+  text-decoration: none;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  background: #f3f3f3;
+  text-decoration: none;
+}
+
+.nav-link.active {
+  color: #0b5cab;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 #0b5cab;
+}
+
+.account {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.account-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .menu {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 0.5rem;
+  }
+
+  .menu.open {
+    display: flex;
+  }
+
+  .links {
+    flex-direction: column;
+  }
+
+  .nav-link {
+    width: 100%;
+  }
+
+  .nav-link.active {
+    box-shadow: inset 3px 0 0 #0b5cab;
+  }
+
+  .account {
+    flex-direction: column;
+  }
+
+  .account-btn {
+    justify-content: center;
+  }
+}

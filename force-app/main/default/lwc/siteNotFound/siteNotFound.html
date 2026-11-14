@@ -1,0 +1,28 @@
+<template>
+  <section class="not-found" aria-labelledby="nf-heading">
+    <lightning-icon
+      icon-name="utility:search"
+      size="medium"
+      alternative-text=""
+      class="icon"
+    ></lightning-icon>
+    <h1 id="nf-heading" class="slds-text-heading_large" data-id="heading">
+      {heading}
+    </h1>
+    <p class="message" data-id="message">{message}</p>
+    <div class="actions">
+      <a
+        class="slds-button slds-button_brand action"
+        href={searchUrl}
+        data-id="search"
+        >Back to search</a
+      >
+      <a
+        class="slds-button slds-button_neutral action"
+        href={homeUrl}
+        data-id="home"
+        >Go to home page</a
+      >
+    </div>
+  </section>
+</template>

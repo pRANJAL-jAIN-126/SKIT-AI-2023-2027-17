@@ -1,0 +1,38 @@
+<template>
+  <figure class={frameClass}>
+    <template lwc:if={showImage}>
+      <img
+        class="photo"
+        src={resolvedUrl}
+        alt={alt}
+        loading={loadingMode}
+        width="960"
+        height="600"
+        onerror={handleError}
+        data-id="photo"
+      />
+    </template>
+    <template lwc:else>
+      <div
+        class="placeholder"
+        role="img"
+        aria-label={alt}
+        data-id="placeholder"
+      >
+        <lightning-icon
+          icon-name="utility:image"
+          size="large"
+          alternative-text=""
+        ></lightning-icon>
+        <span class="slds-text-body_small">Photo coming soon</span>
+      </div>
+    </template>
+    <template lwc:if={showCredit}>
+      <figcaption class="credit" data-id="credit">
+        <a href={credit.source} target="_blank" rel="noopener noreferrer"
+          >{creditLabel}</a
+        >
+      </figcaption>
+    </template>
+  </figure>
+</template>
