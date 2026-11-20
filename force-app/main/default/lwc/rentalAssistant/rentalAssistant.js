@@ -72,6 +72,34 @@ export default class RentalAssistant extends LightningElement {
     get sendDisabled() {
         return this.isSending || !this.draft || !this.draft.trim();
     }
+    get clearDisabled() {
+    return this.isSending ||
+        (this.messages.length === 1 &&
+         !this.history.length &&
+         !this.draft &&
+         !this.errorMessage);
+}
+
+get characterCount() {
+    return this.draft.length;
+}
+
+handleClear() {
+    if (this.isSending) return;
+
+    this.draft = '';
+    this.history = [];
+    this.errorMessage = null;
+    this.messages = [{
+        id: nextId(),
+        role: 'assistant',
+        text: WELCOME,
+        vehicles: [],
+        links: [],
+        booking: null
+    }];
+    this._scrollPending = true;
+}
 
     // ---------- handlers ----------
 
