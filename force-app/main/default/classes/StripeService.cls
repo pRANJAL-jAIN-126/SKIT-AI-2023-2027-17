@@ -103,18 +103,7 @@ public with sharing class StripeService {
             return result('Refunded', 'This payment has been refunded. Please check My Bookings for the booking status.', p.Booking__c);
         }
         if (p.Status__c == PAY_SUCCEEDED) {
-            if (
-                p.Booking__r.Status__c == BookingService.ST_CONFIRMED ||
-                p.Booking__r.Status__c == BookingService.ST_ACTIVE ||
-                p.Booking__r.Status__c == BookingService.ST_COMPLETED
-            ) {
-                return result(PAY_SUCCEEDED, 'Payment received. Your booking is confirmed.', p.Booking__c);
-            }
-            return result(
-                'Review',
-                'Your payment was received, but the booking needs a quick manual check. Our team will contact you shortly.',
-                p.Booking__c
-            );
+            return succeededResult(p.Booking__c, p.Booking__r.Status__c);
         }
 
         Map<String, Object> session = send(
@@ -145,7 +134,10 @@ public with sharing class StripeService {
     private static RentalDtos.PaymentResultDTO markPaidAndConfirm(Payment__c p, Map<String, Object> session) {
         Payment__c locked = BookingRepository.lockPayment(p.Id); // serialise concurrent reloads
         if (locked.Status__c == PAY_SUCCEEDED) {
-            return result(PAY_SUCCEEDED, 'Payment received. Your booking is confirmed.', p.Booking__c);
+            // a concurrent reload already recorded the payment: report the booking's real state, which may be
+            // awaiting staff review rather than confirmed
+            Booking__c current = BookingRepository.getById(p.Booking__c);
+            return succeededResult(p.Booking__c, current?.Status__c);
         }
         p.Status__c = PAY_SUCCEEDED;
         p.Paid_At__c = System.now();
@@ -268,6 +260,23 @@ public with sharing class StripeService {
             parts.add(EncodingUtil.urlEncode(key, 'UTF-8') + '=' + EncodingUtil.urlEncode(fields.get(key) ?? '', 'UTF-8'));
         }
         return String.join(parts, '&');
+    }
+
+    /** Result for an already Succeeded payment: confirmed only if the booking really is, else staff review. */
+    @TestVisible
+    private static RentalDtos.PaymentResultDTO succeededResult(Id bookingId, String bookingStatus) {
+        if (
+            bookingStatus == BookingService.ST_CONFIRMED ||
+            bookingStatus == BookingService.ST_ACTIVE ||
+            bookingStatus == BookingService.ST_COMPLETED
+        ) {
+            return result(PAY_SUCCEEDED, 'Payment received. Your booking is confirmed.', bookingId);
+        }
+        return result(
+            'Review',
+            'Your payment was received, but the booking needs a quick manual check. Our team will contact you shortly.',
+            bookingId
+        );
     }
 
     private static RentalDtos.PaymentResultDTO result(String status, String message, Id bookingId) {

@@ -20,6 +20,7 @@
     <tabs>Payment__c</tabs>
     <tabs>Inspection__c</tabs>
     <tabs>Maintenance__c</tabs>
+    <tabs>KYC_Review</tabs>
     <tabs>KYC_Log__c</tabs>
     <tabs>standard-Contact</tabs>
     <tabs>standard-report</tabs>

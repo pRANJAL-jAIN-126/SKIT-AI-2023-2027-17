@@ -629,6 +629,10 @@
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
+        <tab>KYC_Review</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>KYC_Log__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>

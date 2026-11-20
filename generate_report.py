@@ -35,6 +35,12 @@ def get_repo_info():
     except Exception:
         pass
     return repo_name, branch_name
+def is_bot_author(author):
+    """True for automated committers such as 'github-actions[bot]' or 'dependabot[bot]'."""
+    name = (author or "").strip().lower()
+    return name.endswith("[bot]") or name.startswith("github-actions") or name in ("dependabot", "renovate")
+
+
 def get_git_metrics(interval="weekly"):
     """
     Parses Git commit logs.
@@ -80,7 +86,9 @@ def get_git_metrics(interval="weekly"):
                 continue
                 
             # --- IGNORE AUTOMATED BOTS ---
-            if "bot" in author.lower() or "github-actions" in author.lower():
+            # Only real bot identities (e.g. "github-actions[bot]", "dependabot[bot]"); a plain substring check
+            # would also drop students whose names contain "bot" (e.g. "Talbot").
+            if is_bot_author(author):
                 current_author = None
                 continue
             # -----------------------------

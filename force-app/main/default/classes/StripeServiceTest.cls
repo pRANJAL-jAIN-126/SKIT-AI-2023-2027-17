@@ -260,6 +260,22 @@ private class StripeServiceTest {
     }
 
     @IsTest
+    static void succeededPaymentReportsRealBookingState() {
+        TestDataFactory.useTestConfig();
+        Booking__c b = booking();
+        // the concurrent-reload branch of markPaidAndConfirm and the saved-result branch share this decision
+        for (String confirmedLike : new List<String>{ 'Confirmed', 'Active', 'Completed' }) {
+            Assert.areEqual('Succeeded', StripeService.succeededResult(b.Id, confirmedLike).status, confirmedLike);
+        }
+        for (String notConfirmed : new List<String>{ 'Pending Payment', 'Expired', 'Cancelled', null }) {
+            RentalDtos.PaymentResultDTO r = StripeService.succeededResult(b.Id, notConfirmed);
+            Assert.areEqual('Review', r.status, 'paid but not confirmed must not be reported as confirmed: ' + notConfirmed);
+            Assert.isFalse(r.message.contains('is confirmed'));
+        }
+        Assert.areEqual(0, StripeHttpMock.requests.size(), 'no Stripe call');
+    }
+
+    @IsTest
     static void refundedPaymentDoesNotLookConfirmed() {
         TestDataFactory.useTestConfig();
         Booking__c b = booking();

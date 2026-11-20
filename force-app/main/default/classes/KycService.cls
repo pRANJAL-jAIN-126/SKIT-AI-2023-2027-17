@@ -59,8 +59,9 @@ public with sharing class KycService {
 
     /**
      * @param bookingId optional – when given, R3 checks the licence is valid through that trip's end date.
-     * Never throws for provider failures: they are logged (KYC_Log__c Status Error) and returned as status
-     * 'Error' with a retry message, leaving the Contact's KYC status unchanged (TDD 10.4, NFR-04).
+     * Never throws for provider failures: they are logged (KYC_Log__c Status Error). An unreadable photo returns
+     * 'Error' (retake it); an unavailable OCR service moves the customer to 'Pending Review' with the photo stored, so
+     * staff verify it manually instead of the customer being blocked. A Verified customer is never downgraded.
      */
     public static RentalDtos.KycResultDTO verifyLicense(Id contactId, Id contentVersionId, Id bookingId) {
         Writer db = new Writer();
@@ -87,7 +88,13 @@ public with sharing class KycService {
             ocr = provider().extract(cv.VersionData, mime); // callout – no DML has happened yet (D4)
         } catch (KycException e) {
             db.insertLog(new KYC_Log__c(Contact__c = contactId, Status__c = ERROR, Reason__c = e.getMessage().left(255)));
-            return errorResult(e.getMessage());
+            // An unreadable photo is the customer's to fix (retake it). A verified customer keeps their status.
+            if (e.getMessage() == OcrHttp.MSG_UNREADABLE || c.KYC_Status__c == VERIFIED) {
+                return errorResult(e.getMessage());
+            }
+            // The OCR service itself is unavailable (outage, timeout, missing key / configuration): never block the
+            // customer. Keep the uploaded photo and hand over to staff – flow KYC_Pending_Task creates the review Task.
+            return queueForManualReview(db, contactId, cv);
         }
 
         LicenseParser.ParsedLicense p = LicenseParser.parse(ocr);
@@ -232,6 +239,26 @@ public with sharing class KycService {
             throw new KycException('Verification service is not configured. Please contact support.');
         }
         return (OcrProvider) instance;
+    }
+
+    public static final String MSG_MANUAL_REVIEW =
+        'We could not check your licence automatically right now, so our team will verify it manually. ' +
+        'You can pay for your booking as soon as it is approved.';
+
+    /** OCR unavailable: store the photo on the Contact and move it to Pending Review for a staff check. */
+    private static RentalDtos.KycResultDTO queueForManualReview(Writer db, Id contactId, ContentVersion cv) {
+        db.updateContact(
+            new Contact(
+                Id = contactId,
+                KYC_Status__c = PENDING_REVIEW,
+                License_File_Id__c = cv.ContentDocumentId,
+                KYC_Verified_At__c = null
+            )
+        );
+        RentalDtos.KycResultDTO dto = new RentalDtos.KycResultDTO();
+        dto.status = PENDING_REVIEW;
+        dto.reason = MSG_MANUAL_REVIEW;
+        return dto;
     }
 
     private static RentalDtos.KycResultDTO errorResult(String message) {

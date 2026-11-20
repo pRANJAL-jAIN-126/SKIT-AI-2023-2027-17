@@ -116,19 +116,24 @@ public with sharing class VehicleSearchService {
             for (AggregateResult ar : overlaps) {
                 ids.add((Id) ar.get('v'));
             }
-            // 2) cars still out past their planned return are unavailable
+            // 2) cars still out past their planned return are unavailable – also before the hourly
+            //    BookingOverdueBatch has set Is_Overdue__c (an Active booking past End_DateTime__c is overdue)
             List<AggregateResult> overdue = scoped
                 ? [
                       SELECT Vehicle__c v
                       FROM Booking__c
-                      WHERE Vehicle__c IN :scope AND Status__c = 'Active' AND Is_Overdue__c = TRUE
+                      WHERE
+                          Vehicle__c IN :scope
+                          AND Status__c = 'Active'
+                          AND (Is_Overdue__c = TRUE
+                          OR End_DateTime__c < :nowDt)
                       WITH SYSTEM_MODE
                       GROUP BY Vehicle__c
                   ]
                 : [
                       SELECT Vehicle__c v
                       FROM Booking__c
-                      WHERE Status__c = 'Active' AND Is_Overdue__c = TRUE
+                      WHERE Status__c = 'Active' AND (Is_Overdue__c = TRUE OR End_DateTime__c < :nowDt)
                       WITH SYSTEM_MODE
                       GROUP BY Vehicle__c
                   ];

@@ -121,6 +121,34 @@ private class VehicleSearchServiceTest {
     }
 
     @IsTest
+    static void activeBookingPastReturnBlocksBeforeOverdueBatchRuns() {
+        TestDataFactory.useTestConfig();
+        Vehicle__c v = vehicle('RJ14CD5678');
+        Vehicle__c other = vehicle('RJ14NP7531');
+        Contact c = [SELECT Id FROM Contact LIMIT 1];
+        // car not yet returned, planned return 30 minutes ago, hourly batch has not flagged it yet
+        TestDataFactory.createBooking(c.Id, v.Id, System.now().addDays(-2), System.now().addMinutes(-30), 'Active');
+        Assert.isFalse([SELECT Is_Overdue__c FROM Booking__c LIMIT 1].Is_Overdue__c, 'precondition: flag not set yet');
+        Datetime s = TestDataFactory.future(1, 4);
+        Assert.isTrue(VehicleSearchService.busyVehicleIds(s, s.addDays(1)).contains(v.Id), 'unreturned car is not offered');
+        Assert.isTrue(
+            VehicleSearchService.busyVehicleIds(s, s.addDays(1), new Set<Id>{ v.Id, other.Id }).contains(v.Id),
+            'scoped check (createHold) also blocks it'
+        );
+        Assert.isFalse(VehicleSearchService.busyVehicleIds(s, s.addDays(1)).contains(other.Id), 'other cars unaffected');
+    }
+
+    @IsTest
+    static void completedBookingPastReturnDoesNotBlock() {
+        TestDataFactory.useTestConfig();
+        Vehicle__c v = vehicle('RJ14CD5678');
+        Contact c = [SELECT Id FROM Contact LIMIT 1];
+        TestDataFactory.createBooking(c.Id, v.Id, System.now().addDays(-2), System.now().addMinutes(-30), 'Completed');
+        Datetime s = TestDataFactory.future(1, 4);
+        Assert.isFalse(VehicleSearchService.busyVehicleIds(s, s.addDays(1)).contains(v.Id), 'returned car is available again');
+    }
+
+    @IsTest
     static void filtersAndQuotesApplied() {
         System.runAs(TestDataFactory.staffUser()) {
             TestDataFactory.useTestConfig();

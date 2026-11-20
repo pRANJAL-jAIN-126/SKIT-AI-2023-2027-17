@@ -1,0 +1,91 @@
+<template>
+    <lightning-card title="KYC Review — driving licences" icon-name="standard:individual">
+        <lightning-button-icon
+            slot="actions"
+            icon-name="utility:refresh"
+            alternative-text="Refresh"
+            title="Refresh"
+            onclick={load}
+        ></lightning-button-icon>
+
+        <div class="slds-p-horizontal_medium">
+            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                Customers land here when their licence could not be verified automatically. Open the photo, check the
+                name matches the customer, then approve with the expiry date — or reject with a reason.
+            </p>
+
+            <template lwc:if={isLoading}>
+                <div class="spinner-holder"><lightning-spinner alternative-text="Loading" size="small"></lightning-spinner></div>
+            </template>
+
+            <template lwc:if={loadError}>
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert" data-id="load-error">{loadError}</div>
+            </template>
+
+            <template lwc:if={isEmpty}>
+                <div class="empty" data-id="empty">
+                    <lightning-icon icon-name="utility:success" size="small" alternative-text="Done"></lightning-icon>
+                    <span>No licences waiting for review.</span>
+                </div>
+            </template>
+
+            <template lwc:if={hasRows}>
+                <p class="slds-text-title_bold slds-m-bottom_small" data-id="count">{countLabel}</p>
+                <template for:each={viewRows} for:item="r">
+                    <article key={r.contactId} class="review" data-contact={r.contactId}>
+                        <div class="photo">
+                            <template lwc:if={r.hasPhoto}>
+                                <a href={r.downloadUrl} target="_blank" rel="noopener" title="Open full-size photo">
+                                    <img src={r.photoUrl} alt={r.photoAlt} />
+                                </a>
+                                <a class="slds-text-body_small" href={r.downloadUrl} target="_blank" rel="noopener">Open full size</a>
+                            </template>
+                            <template lwc:else>
+                                <div class="no-photo">No photo uploaded</div>
+                            </template>
+                        </div>
+
+                        <div class="details">
+                            <h3 class="slds-text-heading_small">
+                                <a href={r.recordUrl}>{r.name}</a>
+                            </h3>
+                            <p class="slds-text-body_small slds-text-color_weak">{r.email} · submitted {r.submittedLabel}</p>
+                            <p class="reason" data-id="reason">{r.reason}</p>
+                            <template lwc:if={r.validUntilLabel}>
+                                <p class="slds-text-body_small">
+                                    Has {r.openBookings} open booking(s): licence must be valid after
+                                    <strong>{r.validUntilLabel}</strong>.
+                                </p>
+                            </template>
+
+                            <div class="fields">
+                                <lightning-input type="date" label="Licence valid till (from photo)" required
+                                    data-id={r.contactId} data-field="expiry" value={r.expiry} onchange={handleField}></lightning-input>
+                                <lightning-input type="date" label="Date of birth"
+                                    data-id={r.contactId} data-field="dob" value={r.dob} onchange={handleField}></lightning-input>
+                                <lightning-input label="Licence number"
+                                    data-id={r.contactId} data-field="licence" value={r.licence} onchange={handleField}></lightning-input>
+                            </div>
+                            <lightning-textarea label="Reason (only for reject)" max-length="200"
+                                data-id={r.contactId} data-field="reason" value={r.reasonText} onchange={handleField}></lightning-textarea>
+
+                            <template lwc:if={r.formError}>
+                                <div class="slds-text-color_error slds-m-top_x-small" role="alert" data-id="form-error">{r.formError}</div>
+                            </template>
+
+                            <div class="actions">
+                                <lightning-button variant="brand" label="Approve" data-id={r.contactId} data-action="approve"
+                                    disabled={r.isBusy} onclick={handleApprove}></lightning-button>
+                                <lightning-button variant="destructive-text" label="Reject" data-id={r.contactId} data-action="reject"
+                                    disabled={r.isBusy} onclick={handleReject}></lightning-button>
+                                <template lwc:if={r.isBusy}>
+                                    <lightning-spinner alternative-text="Saving" size="small"></lightning-spinner>
+                                </template>
+                            </div>
+                        </div>
+                    </article>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

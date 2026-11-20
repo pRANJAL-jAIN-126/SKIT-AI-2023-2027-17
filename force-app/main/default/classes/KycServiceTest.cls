@@ -109,19 +109,39 @@ private class KycServiceTest {
     }
 
     @IsTest
-    static void ocrOutageKeepsStatusAndLogsError() {
+    static void ocrOutageGoesToManualReview() {
         RentalDtos.KycResultDTO r = run(new OcrHttpMock(503, 'Service Unavailable'));
-        Assert.areEqual('Error', r.status, 'TC-13');
+        Assert.areEqual('Pending Review', r.status, 'TC-13: customer is not blocked by an OCR outage');
+        Assert.areEqual(KycService.MSG_MANUAL_REVIEW, r.reason);
+        Contact c = [SELECT KYC_Status__c, License_File_Id__c, KYC_Verified_At__c FROM Contact];
+        Assert.areEqual('Pending Review', c.KYC_Status__c, 'staff review instead of automatic check');
+        Assert.isNotNull(c.License_File_Id__c, 'photo kept for the reviewer');
+        Assert.isNull(c.KYC_Verified_At__c, 'not verified automatically');
+        KYC_Log__c log = [SELECT Status__c, Reason__c FROM KYC_Log__c];
+        Assert.areEqual('Error', log.Status__c);
+        Assert.areEqual(OcrHttp.MSG_BUSY, log.Reason__c, 'real cause logged for staff');
+    }
+
+    @IsTest
+    static void ocrOutageNeverDowngradesVerifiedCustomer() {
+        TestDataFactory.useTestConfig();
+        Contact c = contact();
+        c.KYC_Status__c = 'Verified';
+        update c;
+        Test.setMock(HttpCalloutMock.class, new OcrHttpMock(503, 'Service Unavailable'));
+        Test.startTest();
+        RentalDtos.KycResultDTO r = KycService.verifyLicense(c.Id, fileId(), null);
+        Test.stopTest();
+        Assert.areEqual('Error', r.status);
         Assert.areEqual(OcrHttp.MSG_BUSY, r.reason);
-        Assert.areEqual('Not Submitted', [SELECT KYC_Status__c FROM Contact].KYC_Status__c, 'status unchanged');
-        Assert.areEqual('Error', [SELECT Status__c FROM KYC_Log__c].Status__c);
+        Assert.areEqual('Verified', [SELECT KYC_Status__c FROM Contact WHERE Id = :c.Id].KYC_Status__c);
     }
 
     @IsTest
     static void ocrTimeoutAndClientError() {
         RentalDtos.KycResultDTO timeout = run(OcrHttpMock.timeoutMock());
-        Assert.areEqual(OcrHttp.MSG_BUSY, timeout.reason);
-        Assert.areEqual(1, [SELECT COUNT() FROM KYC_Log__c WHERE Status__c = 'Error'], 'one error log');
+        Assert.areEqual('Pending Review', timeout.status, 'timeout goes to manual review');
+        Assert.areEqual(1, [SELECT COUNT() FROM KYC_Log__c WHERE Status__c = 'Error' AND Reason__c = :OcrHttp.MSG_BUSY], 'one error log');
     }
 
     @IsTest
@@ -155,8 +175,8 @@ private class KycServiceTest {
     static void misconfiguredProviderIsReportedSafely() {
         TestDataFactory.useTestConfig(new Map<String, Object>{ 'OCR_Provider_Class__c' => 'NoSuchClass' });
         RentalDtos.KycResultDTO r = KycService.verifyLicense(contact().Id, fileId(), null);
-        Assert.areEqual('Error', r.status);
-        Assert.isTrue(r.reason.contains('not configured'));
+        Assert.areEqual('Pending Review', r.status, 'a configuration problem never blocks the customer');
+        Assert.isTrue([SELECT Reason__c FROM KYC_Log__c].Reason__c.contains('not configured'), 'cause logged for staff');
     }
 
     @IsTest
@@ -237,8 +257,8 @@ private class KycServiceTest {
                 KycService.verifyLicense(c.Id, cvId, null);
             Test.stopTest();
 
-            System.assertEquals('Error', result.status);
-            System.assert(result.reason.contains('OCR service temporarily unavailable.'));
+            System.assertEquals('Pending Review', result.status);
+            System.assertEquals(KycService.MSG_MANUAL_REVIEW, result.reason);
 
             Contact updated = [
                 SELECT KYC_Status__c FROM Contact WHERE Id = :c.Id
